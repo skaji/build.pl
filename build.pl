@@ -8985,12 +8985,15 @@ my $VERSIONS = "$ROOT/versions";
 sub run { warn "@_\n"; !system @_ or die "FAIL @_\n" }
 
 sub build {
-    my ($version, $is_thread) = @_;
+    my ($version, @argv) = @_;
     for my $dir (grep !-d, "$ROOT/cache", "$ROOT/versions") {
         mkpath $dir or die;
     }
 
-    my $prefix = sprintf "%s%s", $version, ($is_thread ? "-thr" : "");
+    my $shared = grep { $_ eq "-Duseshrplib"  } @argv;
+    my $thread = grep { $_ eq "-Duseithreads" } @argv;
+    my $prefix = sprintf "%s%s%s", $version,
+        $thread ? "-thr" : "", $shared ? "-shr" : "";
     if (-f "$VERSIONS/$prefix.tar.gz") {
         warn "Already exists $prefix.tar.gz\n";
         return;
@@ -9015,7 +9018,7 @@ sub build {
         "-DDEBUGGING=-g",
         "-Dprefix=$VERSIONS/$prefix",
         "-Dman1dir=none", "-Dman3dir=none",
-        ($is_thread ? ("-Duseithreads") : ()),
+        @argv,
     ;
     run "make", "install";
     chdir ".." or die;
@@ -9025,4 +9028,5 @@ sub build {
     run "tar", "czf", "$prefix.tar.gz", $prefix;
 }
 
+die "Usage: $0 5.26.1 -Duseithreads -Duseshrplib\n" if !@ARGV or $ARGV[0] =~ /^(-h|--help)$/;
 build @ARGV;
