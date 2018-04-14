@@ -1,2 +1,4 @@
 requires 'Devel::PatchPerl';
 requires 'HTTP::Tinyish';
+requires 'version';
+requires 'CPAN::Perl::Releases::MetaCPAN';
