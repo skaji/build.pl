@@ -39,8 +39,11 @@ sub build {
         $cache = basename($cpan_path);
         my $url = "https://cpan.metacpan.org/authors/id/$cpan_path";
         warn "Fetching $url\n";
-        my $res = HTTP::Tinyish->new->mirror($url => $cache);
-        die "$res->{status} $res->{reason}, $url\n" unless $res->{success};
+        my $res = HTTP::Tinyish->new(verify_SSL => 1)->mirror($url => $cache);
+        if (!$res->{success}) {
+            unlink $cache;
+            die "$res->{status} $res->{reason}, $url\n";
+        }
     }
     rmtree "perl-$version";
     run "tar", "xf", $cache;
