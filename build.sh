@@ -14,7 +14,7 @@ perl build.pl 5.18.4
 perl build.pl 5.20.3
 perl build.pl 5.22.4
 perl build.pl 5.24.3
-perl build.pl 5.26.1
+perl build.pl 5.26.2
 
 perl build.pl 5.8.1  -Duseithreads
 perl build.pl 5.8.5  -Duseithreads
@@ -28,4 +28,4 @@ perl build.pl 5.18.4 -Duseithreads
 perl build.pl 5.20.3 -Duseithreads
 perl build.pl 5.22.4 -Duseithreads
 perl build.pl 5.24.3 -Duseithreads
-perl build.pl 5.26.1 -Duseithreads
+perl build.pl 5.26.2 -Duseithreads
