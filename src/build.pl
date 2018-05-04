@@ -25,8 +25,8 @@ sub build {
     my $thread = grep { $_ eq "-Duseithreads" } @argv;
     my $prefix = sprintf "%s%s%s", $version,
         $thread ? "-thr" : "", $shared ? "-shr" : "";
-    if (-f "$VERSIONS/$prefix.tar.gz") {
-        warn "Already exists $prefix.tar.gz\n";
+    if (-f "$VERSIONS/$prefix.tar.xz") {
+        warn "Already exists $prefix.tar.xz\n";
         return;
     }
 
@@ -64,7 +64,7 @@ sub build {
     rmtree "perl-$version" or die;
     chdir $VERSIONS or die;
     unlink "$prefix/bin/perl$version" or die;
-    run "tar", "czf", "$prefix.tar.gz", $prefix;
+    run "tar", "cJf", "$prefix.tar.xz", $prefix;
 }
 
 die "Usage: $0 5.26.1 -Duseithreads -Duseshrplib\n" if !@ARGV or $ARGV[0] =~ /^(-h|--help)$/;
