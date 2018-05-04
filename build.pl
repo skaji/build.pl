@@ -9060,7 +9060,7 @@ use version ();
 my $ROOT = $ENV{PLENV_ROOT} || "$ENV{HOME}/.plenv";
 my $VERSIONS = "$ROOT/versions";
 
-sub run { warn "@_\n"; !system @_ or die "FAIL @_\n" }
+sub run { warn "@_\n"; !system { $_[0] } @_ or die "FAIL @_\n" }
 
 sub wrap {
     my ($file, $code) = @_;
@@ -9124,7 +9124,8 @@ sub build {
     ;
 
     my @parallel = version->parse($version) >= version->parse("5.16.0") ? ("-j8") : ();
-    run "make", @parallel, "install";
+    run "make", @parallel;
+    run "make", "install";
     chdir ".." or die;
     rmtree "perl-$version" or die;
     chdir $VERSIONS or die;
@@ -9162,11 +9163,19 @@ sub build_all {
         my $v = $want->{version};
         warn "Building $v ...\n";
         my $took1 = wrap $logfile, sub { build $v };
-        warn " DONE took $took1 seconds\n" if $took1 > 1;
+        if ($took1 > 1) {
+            warn " DONE took $took1 seconds\n";
+        } else {
+            warn " SKIP it\n";
+        }
 
         warn "Building $v -Duseithreads ...\n";
         my $took2 = wrap $logfile, sub { build $v, "-Duseithreads" };
-        warn " DONE took $took2 seconds\n" if $took2 > 1;
+        if ($took2 > 1) {
+            warn " DONE took $took2 seconds\n";
+        } else {
+            warn " SKIP it\n";
+        }
     }
 }
 
