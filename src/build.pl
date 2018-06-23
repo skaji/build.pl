@@ -76,9 +76,15 @@ sub build {
         @argv,
     ;
 
-    my @parallel = version->parse($version) >= version->parse("5.16.0") ? ("-j8") : ();
-    run "make", @parallel;
-    run "make", "install";
+    my $v = version->parse($version);
+    if ($v >= version->parse("5.20.0")) {
+        run "make", "-j8", "install";
+    } elsif ($v >= version->parse("5.16.0")) {
+        run "make", "-j8";
+        run "make", "install";
+    } else {
+        run "make", "install";
+    }
     chdir ".." or die;
     rmtree "perl-$version" or die;
     chdir $VERSIONS or die;
