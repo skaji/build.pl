@@ -9183,7 +9183,7 @@ sub wrap {
     open STDOUT, ">&", $save_stdout;
     open STDERR, ">&", $save_stderr;
     die $err if $@;
-    $elapsed;
+    ($res, $elapsed);
 }
 
 sub build {
@@ -9208,6 +9208,7 @@ sub build {
     if (!$cache) {
         my $hash = perl_tarballs($version) or die "Cannot find url for $version";
         my ($cpan_path) = sort values %$hash;
+        $cpan_path =~ s/\.gz$/.xz/ if version->parse($version) >= version->parse("5.22.0");
         $cache = basename($cpan_path);
         my $url = "https://cpan.metacpan.org/authors/id/$cpan_path";
         warn "Fetching $url\n";
@@ -9244,6 +9245,7 @@ sub build {
     chdir $VERSIONS or die;
     unlink "$prefix/bin/perl$version" or die;
     run "tar", "cJf", "$prefix.tar.xz", $prefix;
+    return 1;
 }
 
 sub build_all {
@@ -9262,8 +9264,8 @@ sub build_all {
         };
     }
     my @want;
-    push @want, grep { $_->{patch} != 0 } @{$perl{8}};
-    push @want, @{$perl{10}};
+    push @want, sort { $a->{patch} <=> $b->{patch} } grep { $_->{patch} != 0 } @{$perl{8}};
+    push @want, sort { $a->{patch} <=> $b->{patch} } @{$perl{10}};
     for my $minor (grep { $_ > 10 } sort keys %perl) {
         my ($max) = sort { $b->{patch} <=> $a->{patch} } @{$perl{$minor}};
         push @want, $max;
@@ -9274,25 +9276,33 @@ sub build_all {
     warn "Using $logfile\n";
     for my $want (@want) {
         my $v = $want->{version};
-        warn "Building $v ...\n";
-        my $took1 = wrap $logfile, sub { build $v };
-        if ($took1 > 1) {
-            warn " DONE took $took1 seconds\n";
+        print STDERR "Building $v ...";
+        my ($done1, $took1) = wrap $logfile, sub { build $v };
+        if ($done1) {
+            print STDERR " DONE took $took1 seconds\n";
         } else {
-            warn " SKIP it\n";
+            print STDERR " SKIP it\n";
         }
 
-        warn "Building $v -Duseithreads ...\n";
-        my $took2 = wrap $logfile, sub { build $v, "-Duseithreads" };
-        if ($took2 > 1) {
-            warn " DONE took $took2 seconds\n";
+        print STDERR "Building $v -Duseithreads ...";
+        my ($done2, $took2) = wrap $logfile, sub { build $v, "-Duseithreads" };
+        if ($done2) {
+            print STDERR " DONE took $took2 seconds\n";
         } else {
-            warn " SKIP it\n";
+            print STDERR " SKIP it\n";
         }
     }
 }
 
-die "Usage: $0 5.26.1 -Duseithreads -Duseshrplib\n" if !@ARGV or $ARGV[0] =~ /^(-h|--help)$/;
+my $HELP = <<"___";
+Usage:
+  $0 5.28.1
+  $0 5.28.1 -Duseithreads
+  $0 5.28.1 -Duseshrplib
+  $0 --all
+___
+
+die $HELP if !@ARGV or $ARGV[0] =~ /^(-h|--help)$/;
 if ($ARGV[0] eq "--all") {
     build_all;
 } else {
