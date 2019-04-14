@@ -9208,7 +9208,7 @@ sub build {
     if (!$cache) {
         my $hash = perl_tarballs($version) or die "Cannot find url for $version";
         my ($cpan_path) = sort values %$hash;
-        $cpan_path =~ s/\.gz$/.xz/ if version->parse($version) >= version->parse("5.22.0");
+        $cpan_path =~ s/\.(gz|bz2)$/.xz/ if version->parse($version) >= version->parse("5.22.0");
         $cache = basename($cpan_path);
         my $url = "https://cpan.metacpan.org/authors/id/$cpan_path";
         warn "Fetching $url\n";
