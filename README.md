@@ -1,6 +1,6 @@
 # build perls for plenv
 
-This script builds perl for plenv. The one command `build.pl --all` builds:
+This script builds perls for plenv. The one command `build.pl --all` builds:
 
 * 5.8.1, 5.8.2, 5.8.3, 5.8.4, 5.8.5, 5.8.6, 5.8.7, 5.8.8, 5.8.9
 * 5.10.0, 5.10.1
@@ -34,7 +34,7 @@ $ mv build.pl /path/to/bin/
 
 ```
 $ build.pl --all
-(Be patient; this take more than 1 hour...)
+(Be patient; this will take more than 1 hour...)
 
 $ plenv versions
   system
