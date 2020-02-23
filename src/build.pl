@@ -73,6 +73,7 @@ sub build {
         "-des",
         "-DDEBUGGING=-g",
         "-Dprefix=$VERSIONS/$prefix",
+        "-Dscriptdir=$VERSIONS/$prefix/bin",
         "-Dman1dir=none", "-Dman3dir=none",
         @argv,
     ;
