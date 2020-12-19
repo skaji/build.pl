@@ -6,12 +6,24 @@ use CPAN::Perl::Releases::MetaCPAN qw(perl_tarballs);
 use Devel::PatchPerl;
 use File::Basename qw(basename);
 use File::Path qw(mkpath rmtree);
+use File::Temp qw(tempfile);
 use File::pushd qw(pushd);
 use HTTP::Tinyish;
 use version ();
 
 my $ROOT = $ENV{PLENV_ROOT} || "$ENV{HOME}/.plenv";
 my $VERSIONS = "$ROOT/versions";
+
+my $DATAFILE;
+sub patchfile {
+    return $DATAFILE if $DATAFILE;
+    my $fh;
+    ($fh, $DATAFILE) = tempfile UNLINK => 1;
+    my $data = do { local $/; my $data = <DATA>; close DATA; $data };
+    print {$fh} $data;
+    close $fh;
+    return $DATAFILE;
+}
 
 sub run { warn "@_\n"; !system { $_[0] } @_ or die "FAIL @_\n" }
 
@@ -31,6 +43,7 @@ sub wrap {
     die $err if $@;
     ($res, $elapsed);
 }
+
 
 sub build {
     my ($version, @argv) = @_;
@@ -69,6 +82,12 @@ sub build {
     chdir "perl-$version" or die;
     Devel::PatchPerl->patch_source;
 
+    my $v = version->parse($version);
+    if ($v <= version->parse("5.8.2") && $^O eq 'darwin') {
+        my $file = patchfile;
+        run "bash", "-c", "patch -p0 < $file";
+    }
+
     run "./Configure",
         "-des",
         "-DDEBUGGING=-g",
@@ -78,7 +97,6 @@ sub build {
         @argv,
     ;
 
-    my $v = version->parse($version);
     if ($v >= version->parse("5.20.0")) {
         run "make", "-j8", "install";
     } elsif ($v >= version->parse("5.16.0")) {
@@ -155,3 +173,108 @@ if ($ARGV[0] eq "--all") {
 } else {
     build @ARGV;
 }
+
+__DATA__
+diff --git doio.c doio.c
+index af4d17d487..dc192d4717 100644
+--- doio.c
++++ doio.c
+@@ -48,9 +48,7 @@
+ #  define OPEN_EXCL 0
+ #endif
+ 
+-#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
+ #include <signal.h>
+-#endif
+ 
+ bool
+ Perl_do_open(pTHX_ GV *gv, register char *name, I32 len, int as_raw,
+diff --git doop.c doop.c
+index 546d33d14c..0318578b6d 100644
+--- doop.c
++++ doop.c
+@@ -17,10 +17,8 @@
+ #include "perl.h"
+ 
+ #ifndef PERL_MICRO
+-#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
+ #include <signal.h>
+ #endif
+-#endif
+ 
+ STATIC I32
+ S_do_trans_simple(pTHX_ SV *sv)
+diff --git mg.c mg.c
+index 16d7c4343e..6ee5f57179 100644
+--- mg.c
++++ mg.c
+@@ -392,10 +392,7 @@ Perl_mg_free(pTHX_ SV *sv)
+     return 0;
+ }
+ 
+-
+-#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
+ #include <signal.h>
+-#endif
+ 
+ U32
+ Perl_magic_regdata_cnt(pTHX_ SV *sv, MAGIC *mg)
+diff --git mpeix/mpeixish.h mpeix/mpeixish.h
+index 658e72ef87..49ef4355fe 100644
+--- mpeix/mpeixish.h
++++ mpeix/mpeixish.h
+@@ -87,9 +87,7 @@
+  */
+ /* #define ALTERNATE_SHEBANG "#!" / **/
+ 
+-#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
+-# include <signal.h>
+-#endif
++#include <signal.h>
+ 
+ #ifndef SIGABRT
+ #    define SIGABRT SIGILL
+diff --git plan9/plan9ish.h plan9/plan9ish.h
+index 5c922cf0ba..c3ae06790a 100644
+--- plan9/plan9ish.h
++++ plan9/plan9ish.h
+@@ -93,9 +93,7 @@
+  */
+ /* #define ALTERNATE_SHEBANG "#!" / **/
+ 
+-#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
+-# include <signal.h>
+-#endif
++#include <signal.h>
+ 
+ #ifndef SIGABRT
+ #    define SIGABRT SIGILL
+diff --git unixish.h unixish.h
+index 4bf37095a0..23b3cadf12 100644
+--- unixish.h
++++ unixish.h
+@@ -103,9 +103,7 @@
+  */
+ /* #define ALTERNATE_SHEBANG "#!" / **/
+ 
+-#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+ # include <signal.h>
+-#endif
+ 
+ #ifndef SIGABRT
+ #    define SIGABRT SIGILL
+diff --git util.c util.c
+index 4f18a3060f..856ef93bd7 100644
+--- util.c
++++ util.c
+@@ -18,10 +18,7 @@
+ #include "perl.h"
+ 
+ #ifndef PERL_MICRO
+-#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
+ #include <signal.h>
+-#endif
+-
+ #ifndef SIG_ERR
+ # define SIG_ERR ((Sighandler_t) -1)
+ #endif
