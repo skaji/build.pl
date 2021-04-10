@@ -2,3 +2,5 @@ requires 'Devel::PatchPerl';
 requires 'HTTP::Tinyish';
 requires 'version';
 requires 'CPAN::Perl::Releases::MetaCPAN';
+requires 'Devel::PatchPerl::Plugin::Darwin::RemoveIncludeGuard',
+    git => 'https://github.com/skaji/Devel-PatchPerl-Plugin-Darwin-RemoveIncludeGuard.git';
