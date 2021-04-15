@@ -11569,112 +11569,53 @@ $fatpacked{"Devel/PatchPerl/Plugin.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\
 DEVEL_PATCHPERL_PLUGIN
 
 $fatpacked{"Devel/PatchPerl/Plugin/Darwin/RemoveIncludeGuard.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL_PLUGIN_DARWIN_REMOVEINCLUDEGUARD';
-  package Devel::PatchPerl::Plugin::Darwin::RemoveIncludeGuard;use strict;use warnings;our$VERSION='0.001';use Devel::PatchPerl;use version ();sub patchperl {my ($class,%argv)=@_;my$version=version->parse($argv{version});my$need_patch=$^O eq 'darwin' && (v5.8.1 <= $version && $version <= v5.8.2);return if!$need_patch;$class->_patch_remove_include_guard}sub _patch_remove_include_guard {my$class=shift;Devel::PatchPerl::_patch(<<'EOF')}1;
-  diff --git doio.c doio.c
-  index af4d17d487..dc192d4717 100644
-  --- doio.c
-  +++ doio.c
-  @@ -48,9 +48,7 @@
-   #  define OPEN_EXCL 0
-   #endif
-   
-  -#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
-   #include <signal.h>
-  -#endif
-   
-   bool
-   Perl_do_open(pTHX_ GV *gv, register char *name, I32 len, int as_raw,
-  diff --git doop.c doop.c
-  index 546d33d14c..0318578b6d 100644
-  --- doop.c
-  +++ doop.c
-  @@ -17,10 +17,8 @@
-   #include "perl.h"
-   
-   #ifndef PERL_MICRO
-  -#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
-   #include <signal.h>
-   #endif
-  -#endif
-   
-   STATIC I32
-   S_do_trans_simple(pTHX_ SV *sv)
-  diff --git mg.c mg.c
-  index 16d7c4343e..6ee5f57179 100644
-  --- mg.c
-  +++ mg.c
-  @@ -392,10 +392,7 @@ Perl_mg_free(pTHX_ SV *sv)
-       return 0;
-   }
-   
-  -
-  -#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
-   #include <signal.h>
-  -#endif
-   
-   U32
-   Perl_magic_regdata_cnt(pTHX_ SV *sv, MAGIC *mg)
-  diff --git mpeix/mpeixish.h mpeix/mpeixish.h
-  index 658e72ef87..49ef4355fe 100644
-  --- mpeix/mpeixish.h
-  +++ mpeix/mpeixish.h
-  @@ -87,9 +87,7 @@
-    */
-   /* #define ALTERNATE_SHEBANG "#!" / **/
-   
-  -#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
-  -# include <signal.h>
-  -#endif
-  +#include <signal.h>
-   
-   #ifndef SIGABRT
-   #    define SIGABRT SIGILL
-  diff --git plan9/plan9ish.h plan9/plan9ish.h
-  index 5c922cf0ba..c3ae06790a 100644
-  --- plan9/plan9ish.h
-  +++ plan9/plan9ish.h
-  @@ -93,9 +93,7 @@
-    */
-   /* #define ALTERNATE_SHEBANG "#!" / **/
-   
-  -#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
-  -# include <signal.h>
-  -#endif
-  +#include <signal.h>
-   
-   #ifndef SIGABRT
-   #    define SIGABRT SIGILL
-  diff --git unixish.h unixish.h
-  index 4bf37095a0..23b3cadf12 100644
-  --- unixish.h
-  +++ unixish.h
-  @@ -103,9 +103,7 @@
-    */
-   /* #define ALTERNATE_SHEBANG "#!" / **/
-   
-  -#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
-   # include <signal.h>
-  -#endif
-   
-   #ifndef SIGABRT
-   #    define SIGABRT SIGILL
-  diff --git util.c util.c
-  index 4f18a3060f..856ef93bd7 100644
-  --- util.c
-  +++ util.c
-  @@ -18,10 +18,7 @@
-   #include "perl.h"
-   
-   #ifndef PERL_MICRO
-  -#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
-   #include <signal.h>
-  -#endif
-  -
-   #ifndef SIG_ERR
-   # define SIG_ERR ((Sighandler_t) -1)
-   #endif
-  EOF
+  package Devel::PatchPerl::Plugin::Darwin::RemoveIncludeGuard;use strict;use warnings;our$VERSION='0.001';use Devel::PatchPerl::Plugin::Darwin::RemoveIncludeGuard::Share;use Devel::PatchPerl;use version ();sub patchperl {my ($class,%argv)=@_;my$version=version->parse($argv{version});my$need_patch=$^O eq 'darwin' && (v5.8.1 <= $version && $version <= v5.8.2);return if!$need_patch;my$patch=Devel::PatchPerl::Plugin::Darwin::RemoveIncludeGuard::Share->file("patch");Devel::PatchPerl::_patch($patch)}1;
 DEVEL_PATCHPERL_PLUGIN_DARWIN_REMOVEINCLUDEGUARD
+
+$fatpacked{"Devel/PatchPerl/Plugin/Darwin/RemoveIncludeGuard/Share.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL_PLUGIN_DARWIN_REMOVEINCLUDEGUARD_SHARE';
+  package Devel::PatchPerl::Plugin::Darwin::RemoveIncludeGuard::Share;use strict;use warnings;use MIME::Base64 ();my%file;sub file {my$class=shift;@_ ? $file{$_[0]}: \%file}$file{"patch"}=MIME::Base64::decode_base64(<<'___');1;
+  ZGlmZiAtLWdpdCBkb2lvLmMgZG9pby5jCmluZGV4IGFmNGQxN2Q0ODcuLmRjMTkyZDQ3MTcgMTAw
+  NjQ0Ci0tLSBkb2lvLmMKKysrIGRvaW8uYwpAQCAtNDgsOSArNDgsNyBAQAogIyAgZGVmaW5lIE9Q
+  RU5fRVhDTCAwCiAjZW5kaWYKIAotI2lmICFkZWZpbmVkKE5TSUcpIHx8IGRlZmluZWQoTV9VTklY
+  KSB8fCBkZWZpbmVkKE1fWEVOSVgpCiAjaW5jbHVkZSA8c2lnbmFsLmg+Ci0jZW5kaWYKIAogYm9v
+  bAogUGVybF9kb19vcGVuKHBUSFhfIEdWICpndiwgcmVnaXN0ZXIgY2hhciAqbmFtZSwgSTMyIGxl
+  biwgaW50IGFzX3JhdywKZGlmZiAtLWdpdCBkb29wLmMgZG9vcC5jCmluZGV4IDU0NmQzM2QxNGMu
+  LjAzMTg1NzhiNmQgMTAwNjQ0Ci0tLSBkb29wLmMKKysrIGRvb3AuYwpAQCAtMTcsMTAgKzE3LDgg
+  QEAKICNpbmNsdWRlICJwZXJsLmgiCiAKICNpZm5kZWYgUEVSTF9NSUNSTwotI2lmICFkZWZpbmVk
+  KE5TSUcpIHx8IGRlZmluZWQoTV9VTklYKSB8fCBkZWZpbmVkKE1fWEVOSVgpCiAjaW5jbHVkZSA8
+  c2lnbmFsLmg+CiAjZW5kaWYKLSNlbmRpZgogCiBTVEFUSUMgSTMyCiBTX2RvX3RyYW5zX3NpbXBs
+  ZShwVEhYXyBTViAqc3YpCmRpZmYgLS1naXQgbWcuYyBtZy5jCmluZGV4IDE2ZDdjNDM0M2UuLjZl
+  ZTVmNTcxNzkgMTAwNjQ0Ci0tLSBtZy5jCisrKyBtZy5jCkBAIC0zOTIsMTAgKzM5Miw3IEBAIFBl
+  cmxfbWdfZnJlZShwVEhYXyBTViAqc3YpCiAgICAgcmV0dXJuIDA7CiB9CiAKLQotI2lmICFkZWZp
+  bmVkKE5TSUcpIHx8IGRlZmluZWQoTV9VTklYKSB8fCBkZWZpbmVkKE1fWEVOSVgpCiAjaW5jbHVk
+  ZSA8c2lnbmFsLmg+Ci0jZW5kaWYKIAogVTMyCiBQZXJsX21hZ2ljX3JlZ2RhdGFfY250KHBUSFhf
+  IFNWICpzdiwgTUFHSUMgKm1nKQpkaWZmIC0tZ2l0IG1wZWl4L21wZWl4aXNoLmggbXBlaXgvbXBl
+  aXhpc2guaAppbmRleCA2NThlNzJlZjg3Li40OWVmNDM1NWZlIDEwMDY0NAotLS0gbXBlaXgvbXBl
+  aXhpc2guaAorKysgbXBlaXgvbXBlaXhpc2guaApAQCAtODcsOSArODcsNyBAQAogICovCiAvKiAj
+  ZGVmaW5lIEFMVEVSTkFURV9TSEVCQU5HICIjISIgLyAqKi8KIAotI2lmICFkZWZpbmVkKE5TSUcp
+  IHx8IGRlZmluZWQoTV9VTklYKSB8fCBkZWZpbmVkKE1fWEVOSVgpCi0jIGluY2x1ZGUgPHNpZ25h
+  bC5oPgotI2VuZGlmCisjaW5jbHVkZSA8c2lnbmFsLmg+CiAKICNpZm5kZWYgU0lHQUJSVAogIyAg
+  ICBkZWZpbmUgU0lHQUJSVCBTSUdJTEwKZGlmZiAtLWdpdCBwbGFuOS9wbGFuOWlzaC5oIHBsYW45
+  L3BsYW45aXNoLmgKaW5kZXggNWM5MjJjZjBiYS4uYzNhZTA2NzkwYSAxMDA2NDQKLS0tIHBsYW45
+  L3BsYW45aXNoLmgKKysrIHBsYW45L3BsYW45aXNoLmgKQEAgLTkzLDkgKzkzLDcgQEAKICAqLwog
+  LyogI2RlZmluZSBBTFRFUk5BVEVfU0hFQkFORyAiIyEiIC8gKiovCiAKLSNpZiAhZGVmaW5lZChO
+  U0lHKSB8fCBkZWZpbmVkKE1fVU5JWCkgfHwgZGVmaW5lZChNX1hFTklYKQotIyBpbmNsdWRlIDxz
+  aWduYWwuaD4KLSNlbmRpZgorI2luY2x1ZGUgPHNpZ25hbC5oPgogCiAjaWZuZGVmIFNJR0FCUlQK
+  ICMgICAgZGVmaW5lIFNJR0FCUlQgU0lHSUxMCmRpZmYgLS1naXQgdW5peGlzaC5oIHVuaXhpc2gu
+  aAppbmRleCA0YmYzNzA5NWEwLi4yM2IzY2FkZjEyIDEwMDY0NAotLS0gdW5peGlzaC5oCisrKyB1
+  bml4aXNoLmgKQEAgLTEwMyw5ICsxMDMsNyBAQAogICovCiAvKiAjZGVmaW5lIEFMVEVSTkFURV9T
+  SEVCQU5HICIjISIgLyAqKi8KIAotI2lmICFkZWZpbmVkKE5TSUcpIHx8IGRlZmluZWQoTV9VTklY
+  KSB8fCBkZWZpbmVkKE1fWEVOSVgpIHx8IGRlZmluZWQoX19OZXRCU0RfXykgfHwgZGVmaW5lZChf
+  X0ZyZWVCU0RfXykgfHwgZGVmaW5lZChfX09wZW5CU0RfXykKICMgaW5jbHVkZSA8c2lnbmFsLmg+
+  Ci0jZW5kaWYKIAogI2lmbmRlZiBTSUdBQlJUCiAjICAgIGRlZmluZSBTSUdBQlJUIFNJR0lMTApk
+  aWZmIC0tZ2l0IHV0aWwuYyB1dGlsLmMKaW5kZXggNGYxOGEzMDYwZi4uODU2ZWY5M2JkNyAxMDA2
+  NDQKLS0tIHV0aWwuYworKysgdXRpbC5jCkBAIC0xOCwxMCArMTgsNyBAQAogI2luY2x1ZGUgInBl
+  cmwuaCIKIAogI2lmbmRlZiBQRVJMX01JQ1JPCi0jaWYgIWRlZmluZWQoTlNJRykgfHwgZGVmaW5l
+  ZChNX1VOSVgpIHx8IGRlZmluZWQoTV9YRU5JWCkKICNpbmNsdWRlIDxzaWduYWwuaD4KLSNlbmRp
+  ZgotCiAjaWZuZGVmIFNJR19FUlIKICMgZGVmaW5lIFNJR19FUlIgKChTaWdoYW5kbGVyX3QpIC0x
+  KQogI2VuZGlmCg==
+  ___
+DEVEL_PATCHPERL_PLUGIN_DARWIN_REMOVEINCLUDEGUARD_SHARE
 
 $fatpacked{"Exporter.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'EXPORTER';
   package Exporter;require 5.006;our$Debug=0;our$ExportLevel=0;our$Verbose ||= 0;our$VERSION='5.74';our (%Cache);sub as_heavy {require Exporter::Heavy;my$c=(caller(1))[3];$c =~ s/.*:://;\&{"Exporter::Heavy::heavy_$c"}}sub export {goto &{as_heavy()}}sub import {my$pkg=shift;my$callpkg=caller($ExportLevel);if ($pkg eq "Exporter" and @_ and $_[0]eq "import"){*{$callpkg."::import"}=\&import;return}my$exports=\@{"$pkg\::EXPORT"};my$fail=${$pkg .'::'}{EXPORT_FAIL}&& \@{"$pkg\::EXPORT_FAIL"};return export$pkg,$callpkg,@_ if$Verbose or $Debug or $fail && @$fail > 1;my$export_cache=($Cache{$pkg}||= {});my$args=@_ or @_=@$exports;if ($args and not %$export_cache){s/^&//,$export_cache->{$_}=1 foreach (@$exports,@{"$pkg\::EXPORT_OK"})}my$heavy;if ($args or $fail){($heavy=(/\W/ or $args and not exists$export_cache->{$_}or $fail and @$fail and $_ eq $fail->[0]))and last foreach (@_)}else {($heavy=/\W/)and last foreach (@_)}return export$pkg,$callpkg,($args ? @_ : ())if$heavy;local$SIG{__WARN__}=sub {require Carp;&Carp::carp}if not $SIG{__WARN__};*{"$callpkg\::$_"}=\&{"$pkg\::$_"}foreach @_}sub export_fail {my$self=shift;@_}sub export_to_level {goto &{as_heavy()}}sub export_tags {goto &{as_heavy()}}sub export_ok_tags {goto &{as_heavy()}}sub require_version {goto &{as_heavy()}}1;
