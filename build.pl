@@ -11626,7 +11626,7 @@ $fatpacked{"Exporter/Heavy.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'
 EXPORTER_HEAVY
 
 $fatpacked{"File/Which.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'FILE_WHICH';
-  package File::Which;use strict;use warnings;use base qw(Exporter);use File::Spec ();our$VERSION='1.24';our@EXPORT='which';our@EXPORT_OK='where';use constant IS_VMS=>($^O eq 'VMS');use constant IS_MAC=>($^O eq 'MacOS');use constant IS_WIN=>($^O eq 'MSWin32' or $^O eq 'dos' or $^O eq 'os2');use constant IS_DOS=>IS_WIN();use constant IS_CYG=>($^O eq 'cygwin' || $^O eq 'msys');our$IMPLICIT_CURRENT_DIR=IS_WIN || IS_VMS || IS_MAC;my@PATHEXT=('');if (IS_WIN){if ($ENV{PATHEXT}){push@PATHEXT,split /;/,$ENV{PATHEXT}}else {push@PATHEXT,qw{.com .exe .bat}}}elsif (IS_VMS){push@PATHEXT,qw{.exe .com}}elsif (IS_CYG){push@PATHEXT,qw{.exe .com}}sub which {my ($exec)=@_;return undef unless defined$exec;return undef if$exec eq '';my$all=wantarray;my@results=();if (IS_VMS){my$symbol=`SHOW SYMBOL $exec`;chomp($symbol);unless ($?){return$symbol unless$all;push@results,$symbol}}if (IS_MAC){my@aliases=split /\,/,$ENV{Aliases};for my$alias (@aliases){if (lc($alias)eq lc($exec)){chomp(my$file=`Alias $alias`);last unless$file;return$file unless$all;push@results,$file;last}}}return$exec if!IS_VMS and!IS_MAC and!IS_WIN and $exec =~ /\// and -f $exec and -x $exec;my@path;if($^O eq 'MSWin32'){@path=split /;/,$ENV{PATH};s/"//g for@path;@path=grep length,@path}else {@path=File::Spec->path}if ($IMPLICIT_CURRENT_DIR){unshift@path,File::Spec->curdir}for my$base (map {File::Spec->catfile($_,$exec)}@path){for my$ext (@PATHEXT){my$file=$base.$ext;next if -d $file;if (-x _ or (IS_MAC || ((IS_WIN or IS_CYG)and grep {$file =~ /$_\z/i}@PATHEXT[1..$#PATHEXT])and -e _)){return$file unless$all;push@results,$file}}}if ($all){return@results}else {return undef}}sub where {my@res=which($_[0]);return@res}1;
+  package File::Which;use strict;use warnings;use base qw(Exporter);use File::Spec ();our$VERSION='1.27';our@EXPORT='which';our@EXPORT_OK='where';use constant IS_VMS=>($^O eq 'VMS');use constant IS_MAC=>($^O eq 'MacOS');use constant IS_WIN=>($^O eq 'MSWin32' or $^O eq 'dos' or $^O eq 'os2');use constant IS_DOS=>IS_WIN();use constant IS_CYG=>($^O eq 'cygwin' || $^O eq 'msys');our$IMPLICIT_CURRENT_DIR=IS_WIN || IS_VMS || IS_MAC;my@PATHEXT=('');if (IS_WIN){if ($ENV{PATHEXT}){push@PATHEXT,split /;/,$ENV{PATHEXT}}else {push@PATHEXT,qw{.com .exe .bat}}}elsif (IS_VMS){push@PATHEXT,qw{.exe .com}}elsif (IS_CYG){push@PATHEXT,qw{.exe .com}}sub which {my ($exec)=@_;return undef unless defined$exec;return undef if$exec eq '';my$all=wantarray;my@results=();if (IS_VMS){my$symbol=`SHOW SYMBOL $exec`;chomp($symbol);unless ($?){return$symbol unless$all;push@results,$symbol}}if (IS_MAC){my@aliases=split /\,/,$ENV{Aliases};for my$alias (@aliases){if (lc($alias)eq lc($exec)){chomp(my$file=`Alias $alias`);last unless$file;return$file unless$all;push@results,$file;last}}}return$exec if!IS_VMS and!IS_MAC and!IS_WIN and $exec =~ /\// and -f $exec and -x $exec;my@path;if($^O eq 'MSWin32'){@path=split /;/,$ENV{PATH};s/"//g for@path;@path=grep length,@path}else {@path=File::Spec->path}if ($IMPLICIT_CURRENT_DIR){unshift@path,File::Spec->curdir}for my$base (map {File::Spec->catfile($_,$exec)}@path){for my$ext (@PATHEXT){my$file=$base.$ext;next if -d $file;if (-x _ or (IS_MAC || ((IS_WIN or IS_CYG)and grep {$file =~ /$_\z/i}@PATHEXT[1..$#PATHEXT])and -e _)){return$file unless$all;push@results,$file}}}if ($all){return@results}else {return undef}}sub where {my@res=which($_[0]);return@res}1;
 FILE_WHICH
 
 $fatpacked{"File/pushd.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'FILE_PUSHD';
@@ -11765,16 +11765,20 @@ $fatpacked{"Module/Pluggable/Object.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."
   package Module::Pluggable::Object;use strict;use File::Find ();use File::Basename;use File::Spec::Functions qw(splitdir catdir curdir catfile abs2rel);use Carp qw(croak carp confess);use Devel::InnerPackage;use vars qw($VERSION $MR);use if $] > 5.017,'deprecate';$VERSION='5.2';BEGIN {eval {require Module::Runtime};unless ($@){Module::Runtime->import('require_module')}else {*require_module=sub {my$module=shift;my$path=$module .".pm";$path =~ s{::}{/}g;require$path}}}sub new {my$class=shift;my%opts=@_;return bless \%opts,$class}sub plugins {my$self=shift;my@args=@_;$self->{'require'}=1 if$self->{'inner'};my$filename=$self->{'filename'};my$pkg=$self->{'package'};$self->_setup_exceptions;for (qw(search_path search_dirs)){$self->{$_}=[$self->{$_}]if exists$self->{$_}&&!ref($self->{$_})}$self->{'search_path'}||= ["${pkg}::Plugin"];$self->{'on_require_error'}||= sub {my ($plugin,$err)=@_;carp "Couldn't require $plugin : $err";return 0};$self->{'on_instantiate_error'}||= sub {my ($plugin,$err)=@_;carp "Couldn't instantiate $plugin: $err";return 0};$self->{'follow_symlinks'}=1 unless exists$self->{'follow_symlinks'};my@SEARCHDIR=exists$INC{"blib.pm"}&& defined$filename && $filename =~ m!(^|/)blib/! &&!$self->{'force_search_all_paths'}? grep {/blib/}@INC : @INC;unshift@SEARCHDIR,@{$self->{'search_dirs'}}if defined$self->{'search_dirs'};my@tmp=@INC;unshift@tmp,@{$self->{'search_dirs'}|| []};local@INC=@tmp if defined$self->{'search_dirs'};my@plugins=$self->search_directories(@SEARCHDIR);push(@plugins,$self->handle_inc_hooks($_,@SEARCHDIR))for @{$self->{'search_path'}};push(@plugins,$self->handle_innerpackages($_))for @{$self->{'search_path'}};return ()unless@plugins;my%plugins;for(@plugins){next unless$self->_is_legit($_);$plugins{$_}=1}if (defined$self->{'instantiate'}){my$method=$self->{'instantiate'};my@objs=();for my$package (sort keys%plugins){next unless$package->can($method);my$obj=eval {$package->$method(@_)};$self->{'on_instantiate_error'}->($package,$@)if $@;push@objs,$obj if$obj}return@objs}else {my@objs=sort keys%plugins;return@objs}}sub _setup_exceptions {my$self=shift;my%only;my%except;my$only;my$except;if (defined$self->{'only'}){if (ref($self->{'only'})eq 'ARRAY'){%only=map {$_=>1}@{$self->{'only'}}}elsif (ref($self->{'only'})eq 'Regexp'){$only=$self->{'only'}}elsif (ref($self->{'only'})eq ''){$only{$self->{'only'}}=1}}if (defined$self->{'except'}){if (ref($self->{'except'})eq 'ARRAY'){%except=map {$_=>1}@{$self->{'except'}}}elsif (ref($self->{'except'})eq 'Regexp'){$except=$self->{'except'}}elsif (ref($self->{'except'})eq ''){$except{$self->{'except'}}=1}}$self->{_exceptions}->{only_hash}=\%only;$self->{_exceptions}->{only}=$only;$self->{_exceptions}->{except_hash}=\%except;$self->{_exceptions}->{except}=$except}sub _is_legit {my$self=shift;my$plugin=shift;my%only=%{$self->{_exceptions}->{only_hash}||{}};my%except=%{$self->{_exceptions}->{except_hash}||{}};my$only=$self->{_exceptions}->{only};my$except=$self->{_exceptions}->{except};my$depth=()=split '::',$plugin,-1;return 0 if (keys%only &&!$only{$plugin});return 0 unless (!defined$only || $plugin =~ m!$only!);return 0 if (keys%except && $except{$plugin});return 0 if (defined$except && $plugin =~ m!$except!);return 0 if defined$self->{max_depth}&& $depth>$self->{max_depth};return 0 if defined$self->{min_depth}&& $depth<$self->{min_depth};return 1}sub search_directories {my$self=shift;my@SEARCHDIR=@_;my@plugins;for my$dir (@SEARCHDIR){push@plugins,$self->search_paths($dir)}return@plugins}sub search_paths {my$self=shift;my$dir=shift;my@plugins;my$file_regex=$self->{'file_regex'}|| qr/\.pm$/;for my$searchpath (@{$self->{'search_path'}}){my$sp=catdir($dir,(split /::/,$searchpath));next unless (-e $sp && -d _);my@files=$self->find_files($sp);for my$file (@files){next unless ($file)=($file =~ /(.*$file_regex)$/);my ($name,$directory,$suffix)=fileparse($file,$file_regex);next if (!$self->{include_editor_junk}&& $self->_is_editor_junk($name));$directory=abs2rel($directory,$sp);my@pkg_dirs=();if ($name eq lc($name)|| $name eq uc($name)){my$pkg_file=catfile($sp,$directory,"$name$suffix");open PKGFILE,"<$pkg_file" or die "search_paths: Can't open $pkg_file: $!";my$in_pod=0;while (my$line=<PKGFILE>){$in_pod=1 if$line =~ m/^=\w/;$in_pod=0 if$line =~ /^=cut/;next if ($in_pod || $line =~ /^=cut/);next if$line =~ /^\s*#/;if ($line =~ m/^\s*package\s+(.*::)?($name)\s*;/i){@pkg_dirs=split /::/,$1 if defined $1;;$name=$2;last}}close PKGFILE}$directory =~ s/^[a-z]://i if($^O =~ /MSWin32|dos/);my@dirs=();if ($directory){($directory)=($directory =~ /(.*)/);@dirs=grep(length($_),splitdir($directory))unless$directory eq curdir();for my$d (reverse@dirs){my$pkg_dir=pop@pkg_dirs;last unless defined$pkg_dir;$d =~ s/\Q$pkg_dir\E/$pkg_dir/i}}else {$directory=""}my$plugin=join '::',$searchpath,@dirs,$name;next unless$plugin =~ m!(?:[a-z\d]+)[a-z\d]*!i;$self->handle_finding_plugin($plugin,\@plugins)}push@plugins,$self->handle_innerpackages($searchpath)}return@plugins}sub _is_editor_junk {my$self=shift;my$name=shift;return 1 if$name =~ /~$/;return 1 if$name =~ /^\.#/;return 1 if$name =~ /\.sw[po]$/;return 0}sub handle_finding_plugin {my$self=shift;my$plugin=shift;my$plugins=shift;my$no_req=shift || 0;return unless$self->_is_legit($plugin);unless (defined$self->{'instantiate'}|| $self->{'require'}){push @$plugins,$plugin;return}$self->{before_require}->($plugin)|| return if defined$self->{before_require};unless ($no_req){my$tmp=$@;my$res=eval {require_module($plugin)};my$err=$@;$@=$tmp;if ($err){if (defined$self->{on_require_error}){$self->{on_require_error}->($plugin,$err)|| return}else {return}}}$self->{after_require}->($plugin)|| return if defined$self->{after_require};push @$plugins,$plugin}sub find_files {my$self=shift;my$search_path=shift;my$file_regex=$self->{'file_regex'}|| qr/\.pm$/;my@files=();{local $_;File::Find::find({no_chdir=>1,follow=>$self->{'follow_symlinks'},wanted=>sub {return unless$File::Find::name =~ /$file_regex/;(my$path=$File::Find::name)=~ s#^\\./##;push@files,$path}},$search_path)}return@files}sub handle_inc_hooks {my$self=shift;my$path=shift;my@SEARCHDIR=@_;my@plugins;for my$dir (@SEARCHDIR){next unless ref$dir && eval {$dir->can('files')};for my$plugin ($dir->files){$plugin =~ s/\.pm$//;$plugin =~ s{/}{::}g;next unless$plugin =~ m!^${path}::!;$self->handle_finding_plugin($plugin,\@plugins)}}return@plugins}sub handle_innerpackages {my$self=shift;return ()if (exists$self->{inner}&&!$self->{inner});my$path=shift;my@plugins;for my$plugin (Devel::InnerPackage::list_packages($path)){$self->handle_finding_plugin($plugin,\@plugins,1)}return@plugins}1;
 MODULE_PLUGGABLE_OBJECT
 
+$fatpacked{"Parallel/Pipes.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'PARALLEL_PIPES';
+  package Parallel::Pipes;use 5.008001;use strict;use warnings;use IO::Handle;use IO::Select;use constant WIN32=>$^O eq 'MSWin32';our$VERSION='0.005';{package Parallel::Pipe::Impl;use Storable ();sub new {my ($class,%option)=@_;my$read_fh=delete$option{read_fh}or die;my$write_fh=delete$option{write_fh}or die;$write_fh->autoflush(1);bless {%option,read_fh=>$read_fh,write_fh=>$write_fh,buf=>'' },$class}sub read :method {my$self=shift;my$_size=$self->_read(4)or return;my$size=unpack 'I',$_size;my$freezed=$self->_read($size);Storable::thaw($freezed)}sub write :method {my ($self,$data)=@_;my$freezed=Storable::freeze({data=>$data});my$size=pack 'I',length($freezed);$self->_write("$size$freezed")}sub _read {my ($self,$size)=@_;my$fh=$self->{read_fh};my$offset=length$self->{buf};while ($offset < $size){my$len=sysread$fh,$self->{buf},65536,$offset;if (!defined$len){die $!}elsif ($len==0){last}else {$offset += $len}}return substr$self->{buf},0,$size,''}sub _write {my ($self,$data)=@_;my$fh=$self->{write_fh};my$size=length$data;my$offset=0;while ($size){my$len=syswrite$fh,$data,$size,$offset;if (!defined$len){die $!}elsif ($len==0){last}else {$size -= $len;$offset += $len}}$size}}{package Parallel::Pipe::Here;our@ISA=qw(Parallel::Pipe::Impl);use Carp ();sub new {my ($class,%option)=@_;$class->SUPER::new(%option,_written=>0)}sub is_written {my$self=shift;$self->{_written}==1}sub read :method {my$self=shift;if (!$self->is_written){Carp::croak("This pipe has not been written; you cannot read it")}$self->{_written}--;return unless my$read=$self->SUPER::read;$read->{data}}sub write :method {my ($self,$task)=@_;if ($self->is_written){Carp::croak("This pipe has already been written; you must read it first")}$self->{_written}++;$self->SUPER::write($task)}}{package Parallel::Pipe::There;our@ISA=qw(Parallel::Pipe::Impl)}{package Parallel::Pipe::Impl::NoFork;use Carp ();sub new {my ($class,%option)=@_;bless {%option},$class}sub is_written {my$self=shift;exists$self->{_result}}sub read :method {my$self=shift;if (!$self->is_written){Carp::croak("This pipe has not been written; you cannot read it")}delete$self->{_result}}sub write :method {my ($self,$task)=@_;if ($self->is_written){Carp::croak("This pipe has already been written; you must read it first")}my$result=$self->{code}->($task);$self->{_result}=$result}}sub new {my ($class,$number,$code)=@_;if (WIN32 and $number!=1){die "The number of pipes must be 1 under WIN32 environment.\n"}my$self=bless {code=>$code,number=>$number,no_fork=>$number==1,pipes=>{},},$class;if ($self->no_fork){$self->{pipes}{-1}=Parallel::Pipe::Impl::NoFork->new(code=>$self->{code})}else {$self->_fork for 1 .. $number}$self}sub no_fork {shift->{no_fork}}sub _fork {my$self=shift;my$code=$self->{code};pipe my$read_fh1,my$write_fh1;pipe my$read_fh2,my$write_fh2;my$pid=fork;die "fork failed" unless defined$pid;if ($pid==0){srand;close $_ for$read_fh1,$write_fh2,map {($_->{read_fh},$_->{write_fh})}$self->pipes;my$there=Parallel::Pipe::There->new(read_fh=>$read_fh2,write_fh=>$write_fh1);while (my$read=$there->read){$there->write($code->($read->{data}))}exit}close $_ for$write_fh1,$read_fh2;$self->{pipes}{$pid}=Parallel::Pipe::Here->new(pid=>$pid,read_fh=>$read_fh1,write_fh=>$write_fh2,)}sub pipes {my$self=shift;map {$self->{pipes}{$_}}sort {$a <=> $b}keys %{$self->{pipes}}}sub is_ready {my$self=shift;return$self->pipes if$self->no_fork;my@pipes=@_ ? @_ : $self->pipes;if (my@ready=grep {$_->{_written}==0}@pipes){return@ready}my$select=IO::Select->new(map {$_->{read_fh}}@pipes);my@ready=$select->can_read;my@return;for my$pipe (@pipes){if (grep {$pipe->{read_fh}==$_}@ready){push@return,$pipe}}return@return}sub is_written {my$self=shift;grep {$_->is_written}$self->pipes}sub close :method {my$self=shift;return if$self->no_fork;close $_ for map {($_->{write_fh},$_->{read_fh})}$self->pipes;while (%{$self->{pipes}}){my$pid=wait;if (delete$self->{pipes}{$pid}){}else {warn "wait() unexpectedly returns $pid\n"}}}1;
+PARALLEL_PIPES
+
 $fatpacked{"parent.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'PARENT';
   package parent;use strict;our$VERSION='0.238';sub import {my$class=shift;my$inheritor=caller(0);if (@_ and $_[0]eq '-norequire'){shift @_}else {for (my@filename=@_){s{::|'}{/}g;require "$_.pm"}}{no strict 'refs';push @{"$inheritor\::ISA"},@_}};1;
 PARENT
 
 $fatpacked{"version.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'VERSION';
-  package version;use 5.006002;use strict;use warnings::register;if ($] >= 5.015){warnings::register_categories(qw/version/)}our$VERSION=0.9928;our$CLASS='version';our (@ISA,$STRICT,$LAX);{local$SIG{'__DIE__'};eval "use version::vxs $VERSION";if ($@){eval "use version::vpp $VERSION";die "$@" if ($@);push@ISA,"version::vpp";local $^W;*version::qv=\&version::vpp::qv;*version::declare=\&version::vpp::declare;*version::_VERSION=\&version::vpp::_VERSION;*version::vcmp=\&version::vpp::vcmp;*version::new=\&version::vpp::new;*version::numify=\&version::vpp::numify;*version::normal=\&version::vpp::normal;if ($] >= 5.009000){no strict 'refs';*version::stringify=\&version::vpp::stringify;*{'version::(""'}=\&version::vpp::stringify;*{'version::(<=>'}=\&version::vpp::vcmp;*{'version::(cmp'}=\&version::vpp::vcmp;*version::parse=\&version::vpp::parse}}else {push@ISA,"version::vxs";local $^W;*version::declare=\&version::vxs::declare;*version::qv=\&version::vxs::qv;*version::_VERSION=\&version::vxs::_VERSION;*version::vcmp=\&version::vxs::VCMP;*version::new=\&version::vxs::new;*version::numify=\&version::vxs::numify;*version::normal=\&version::vxs::normal;if ($] >= 5.009000){no strict 'refs';*version::stringify=\&version::vxs::stringify;*{'version::(""'}=\&version::vxs::stringify;*{'version::(<=>'}=\&version::vxs::VCMP;*{'version::(cmp'}=\&version::vxs::VCMP;*version::parse=\&version::vxs::parse}}}require version::regex;*version::is_lax=\&version::regex::is_lax;*version::is_strict=\&version::regex::is_strict;*LAX=\$version::regex::LAX;*LAX_DECIMAL_VERSION=\$version::regex::LAX_DECIMAL_VERSION;*LAX_DOTTED_DECIMAL_VERSION=\$version::regex::LAX_DOTTED_DECIMAL_VERSION;*STRICT=\$version::regex::STRICT;*STRICT_DECIMAL_VERSION=\$version::regex::STRICT_DECIMAL_VERSION;*STRICT_DOTTED_DECIMAL_VERSION=\$version::regex::STRICT_DOTTED_DECIMAL_VERSION;sub import {no strict 'refs';my ($class)=shift;unless ($class eq $CLASS){local $^W;*{$class.'::declare'}=\&{$CLASS.'::declare'};*{$class.'::qv'}=\&{$CLASS.'::qv'}}my%args;if (@_){map {$args{$_}=1}@_}else {%args=(qv=>1,'UNIVERSAL::VERSION'=>1,)}my$callpkg=caller();if (exists($args{declare})){*{$callpkg.'::declare'}=sub {return$class->declare(shift)}unless defined(&{$callpkg.'::declare'})}if (exists($args{qv})){*{$callpkg.'::qv'}=sub {return$class->qv(shift)}unless defined(&{$callpkg.'::qv'})}if (exists($args{'UNIVERSAL::VERSION'})){local $^W;*UNIVERSAL::VERSION =\&{$CLASS.'::_VERSION'}}if (exists($args{'VERSION'})){*{$callpkg.'::VERSION'}=\&{$CLASS.'::_VERSION'}}if (exists($args{'is_strict'})){*{$callpkg.'::is_strict'}=\&{$CLASS.'::is_strict'}unless defined(&{$callpkg.'::is_strict'})}if (exists($args{'is_lax'})){*{$callpkg.'::is_lax'}=\&{$CLASS.'::is_lax'}unless defined(&{$callpkg.'::is_lax'})}}1;
+  package version;use 5.006002;use strict;use warnings::register;if ($] >= 5.015){warnings::register_categories(qw/version/)}our$VERSION=0.9929;our$CLASS='version';our (@ISA,$STRICT,$LAX);{local$SIG{'__DIE__'};eval "use version::vxs $VERSION";if ($@){eval "use version::vpp $VERSION";die "$@" if ($@);push@ISA,"version::vpp";local $^W;*version::qv=\&version::vpp::qv;*version::declare=\&version::vpp::declare;*version::_VERSION=\&version::vpp::_VERSION;*version::vcmp=\&version::vpp::vcmp;*version::new=\&version::vpp::new;*version::numify=\&version::vpp::numify;*version::normal=\&version::vpp::normal;if ($] >= 5.009000){no strict 'refs';*version::stringify=\&version::vpp::stringify;*{'version::(""'}=\&version::vpp::stringify;*{'version::(<=>'}=\&version::vpp::vcmp;*{'version::(cmp'}=\&version::vpp::vcmp;*version::parse=\&version::vpp::parse}}else {push@ISA,"version::vxs";local $^W;*version::declare=\&version::vxs::declare;*version::qv=\&version::vxs::qv;*version::_VERSION=\&version::vxs::_VERSION;*version::vcmp=\&version::vxs::VCMP;*version::new=\&version::vxs::new;*version::numify=\&version::vxs::numify;*version::normal=\&version::vxs::normal;if ($] >= 5.009000){no strict 'refs';*version::stringify=\&version::vxs::stringify;*{'version::(""'}=\&version::vxs::stringify;*{'version::(<=>'}=\&version::vxs::VCMP;*{'version::(cmp'}=\&version::vxs::VCMP;*version::parse=\&version::vxs::parse}}}require version::regex;*version::is_lax=\&version::regex::is_lax;*version::is_strict=\&version::regex::is_strict;*LAX=\$version::regex::LAX;*LAX_DECIMAL_VERSION=\$version::regex::LAX_DECIMAL_VERSION;*LAX_DOTTED_DECIMAL_VERSION=\$version::regex::LAX_DOTTED_DECIMAL_VERSION;*STRICT=\$version::regex::STRICT;*STRICT_DECIMAL_VERSION=\$version::regex::STRICT_DECIMAL_VERSION;*STRICT_DOTTED_DECIMAL_VERSION=\$version::regex::STRICT_DOTTED_DECIMAL_VERSION;sub import {no strict 'refs';my ($class)=shift;unless ($class eq $CLASS){local $^W;*{$class.'::declare'}=\&{$CLASS.'::declare'};*{$class.'::qv'}=\&{$CLASS.'::qv'}}my%args;if (@_){map {$args{$_}=1}@_}else {%args=(qv=>1,'UNIVERSAL::VERSION'=>1,)}my$callpkg=caller();if (exists($args{declare})){*{$callpkg.'::declare'}=sub {return$class->declare(shift)}unless defined(&{$callpkg.'::declare'})}if (exists($args{qv})){*{$callpkg.'::qv'}=sub {return$class->qv(shift)}unless defined(&{$callpkg.'::qv'})}if (exists($args{'UNIVERSAL::VERSION'})){local $^W;*UNIVERSAL::VERSION =\&{$CLASS.'::_VERSION'}}if (exists($args{'VERSION'})){*{$callpkg.'::VERSION'}=\&{$CLASS.'::_VERSION'}}if (exists($args{'is_strict'})){*{$callpkg.'::is_strict'}=\&{$CLASS.'::is_strict'}unless defined(&{$callpkg.'::is_strict'})}if (exists($args{'is_lax'})){*{$callpkg.'::is_lax'}=\&{$CLASS.'::is_lax'}unless defined(&{$callpkg.'::is_lax'})}}1;
 VERSION
 
 $fatpacked{"version/regex.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'VERSION_REGEX';
-  package version::regex;use strict;our$VERSION=0.9928;my$FRACTION_PART=qr/\.[0-9]+/;my$STRICT_INTEGER_PART=qr/0|[1-9][0-9]*/;my$LAX_INTEGER_PART=qr/[0-9]+/;my$STRICT_DOTTED_DECIMAL_PART=qr/\.[0-9]{1,3}/;my$LAX_DOTTED_DECIMAL_PART=qr/\.[0-9]+/;my$LAX_ALPHA_PART=qr/_[0-9]+/;our$STRICT_DECIMAL_VERSION=qr/ $STRICT_INTEGER_PART $FRACTION_PART? /x;our$STRICT_DOTTED_DECIMAL_VERSION=qr/ v $STRICT_INTEGER_PART $STRICT_DOTTED_DECIMAL_PART{2,} /x;our$STRICT=qr/ $STRICT_DECIMAL_VERSION | $STRICT_DOTTED_DECIMAL_VERSION /x;our$LAX_DECIMAL_VERSION=qr/ $LAX_INTEGER_PART (?: $FRACTION_PART | \. )? $LAX_ALPHA_PART?
+  package version::regex;use strict;our$VERSION=0.9929;my$FRACTION_PART=qr/\.[0-9]+/;my$STRICT_INTEGER_PART=qr/0|[1-9][0-9]*/;my$LAX_INTEGER_PART=qr/[0-9]+/;my$STRICT_DOTTED_DECIMAL_PART=qr/\.[0-9]{1,3}/;my$LAX_DOTTED_DECIMAL_PART=qr/\.[0-9]+/;my$LAX_ALPHA_PART=qr/_[0-9]+/;our$STRICT_DECIMAL_VERSION=qr/ $STRICT_INTEGER_PART $FRACTION_PART? /x;our$STRICT_DOTTED_DECIMAL_VERSION=qr/ v $STRICT_INTEGER_PART $STRICT_DOTTED_DECIMAL_PART{2,} /x;our$STRICT=qr/ $STRICT_DECIMAL_VERSION | $STRICT_DOTTED_DECIMAL_VERSION /x;our$LAX_DECIMAL_VERSION=qr/ $LAX_INTEGER_PART (?: $FRACTION_PART | \. )? $LAX_ALPHA_PART?
   	|
   	$FRACTION_PART $LAX_ALPHA_PART?
       /x;our$LAX_DOTTED_DECIMAL_VERSION=qr/
@@ -11785,7 +11789,7 @@ $fatpacked{"version/regex.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'V
 VERSION_REGEX
 
 $fatpacked{"version/vpp.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'VERSION_VPP';
-  package charstar;use overload ('""'=>\&thischar,'0+'=>\&thischar,'++'=>\&increment,'--'=>\&decrement,'+'=>\&plus,'-'=>\&minus,'*'=>\&multiply,'cmp'=>\&cmp,'<=>'=>\&spaceship,'bool'=>\&thischar,'='=>\&clone,);sub new {my ($self,$string)=@_;my$class=ref($self)|| $self;my$obj={string=>[split(//,$string)],current=>0,};return bless$obj,$class}sub thischar {my ($self)=@_;my$last=$#{$self->{string}};my$curr=$self->{current};if ($curr >= 0 && $curr <= $last){return$self->{string}->[$curr]}else {return ''}}sub increment {my ($self)=@_;$self->{current}++}sub decrement {my ($self)=@_;$self->{current}--}sub plus {my ($self,$offset)=@_;my$rself=$self->clone;$rself->{current}+= $offset;return$rself}sub minus {my ($self,$offset)=@_;my$rself=$self->clone;$rself->{current}-= $offset;return$rself}sub multiply {my ($left,$right,$swapped)=@_;my$char=$left->thischar();return$char * $right}sub spaceship {my ($left,$right,$swapped)=@_;unless (ref($right)){$right=$left->new($right)}return$left->{current}<=> $right->{current}}sub cmp {my ($left,$right,$swapped)=@_;unless (ref($right)){if (length($right)==1){return$left->thischar cmp $right}$right=$left->new($right)}return$left->currstr cmp $right->currstr}sub bool {my ($self)=@_;my$char=$self->thischar;return ($char ne '')}sub clone {my ($left,$right,$swapped)=@_;$right={string=>[@{$left->{string}}],current=>$left->{current},};return bless$right,ref($left)}sub currstr {my ($self,$s)=@_;my$curr=$self->{current};my$last=$#{$self->{string}};if (defined($s)&& $s->{current}< $last){$last=$s->{current}}my$string=join('',@{$self->{string}}[$curr..$last]);return$string}package version::vpp;use 5.006002;use strict;use warnings::register;use Config;our$VERSION=0.9928;our$CLASS='version::vpp';our ($LAX,$STRICT,$WARN_CATEGORY);if ($] > 5.015){warnings::register_categories(qw/version/);$WARN_CATEGORY='version'}else {$WARN_CATEGORY='numeric'}require version::regex;*version::vpp::is_strict=\&version::regex::is_strict;*version::vpp::is_lax=\&version::regex::is_lax;*LAX=\$version::regex::LAX;*STRICT=\$version::regex::STRICT;use overload ('""'=>\&stringify,'0+'=>\&numify,'cmp'=>\&vcmp,'<=>'=>\&vcmp,'bool'=>\&vbool,'+'=>\&vnoop,'-'=>\&vnoop,'*'=>\&vnoop,'/'=>\&vnoop,'+='=>\&vnoop,'-='=>\&vnoop,'*='=>\&vnoop,'/='=>\&vnoop,'abs'=>\&vnoop,);sub import {no strict 'refs';my ($class)=shift;unless ($class eq $CLASS){local $^W;*{$class.'::declare'}=\&{$CLASS.'::declare'};*{$class.'::qv'}=\&{$CLASS.'::qv'}}my%args;if (@_){map {$args{$_}=1}@_}else {%args=(qv=>1,'UNIVERSAL::VERSION'=>1,)}my$callpkg=caller();if (exists($args{declare})){*{$callpkg.'::declare'}=sub {return$class->declare(shift)}unless defined(&{$callpkg.'::declare'})}if (exists($args{qv})){*{$callpkg.'::qv'}=sub {return$class->qv(shift)}unless defined(&{$callpkg.'::qv'})}if (exists($args{'UNIVERSAL::VERSION'})){no warnings qw/redefine/;*UNIVERSAL::VERSION =\&{$CLASS.'::_VERSION'}}if (exists($args{'VERSION'})){*{$callpkg.'::VERSION'}=\&{$CLASS.'::_VERSION'}}if (exists($args{'is_strict'})){*{$callpkg.'::is_strict'}=\&{$CLASS.'::is_strict'}unless defined(&{$callpkg.'::is_strict'})}if (exists($args{'is_lax'})){*{$callpkg.'::is_lax'}=\&{$CLASS.'::is_lax'}unless defined(&{$callpkg.'::is_lax'})}}my$VERSION_MAX=0x7FFFFFFF;use constant TRUE=>1;use constant FALSE=>0;sub isDIGIT {my ($char)=shift->thischar();return ($char =~ /\d/)}sub isALPHA {my ($char)=shift->thischar();return ($char =~ /[a-zA-Z]/)}sub isSPACE {my ($char)=shift->thischar();return ($char =~ /\s/)}sub BADVERSION {my ($s,$errstr,$error)=@_;if ($errstr){$$errstr=$error}return$s}sub prescan_version {my ($s,$strict,$errstr,$sqv,$ssaw_decimal,$swidth,$salpha)=@_;my$qv=defined$sqv ? $$sqv : FALSE;my$saw_decimal=defined$ssaw_decimal ? $$ssaw_decimal : 0;my$width=defined$swidth ? $$swidth : 3;my$alpha=defined$salpha ? $$salpha : FALSE;my$d=$s;if ($qv && isDIGIT($d)){goto dotted_decimal_version}if ($d eq 'v'){$d++;if (isDIGIT($d)){$qv=TRUE}else {return BADVERSION($s,$errstr,"Invalid version format (dotted-decimal versions require at least three parts)")}dotted_decimal_version: if ($strict && $d eq '0' && isDIGIT($d+1)){return BADVERSION($s,$errstr,"Invalid version format (no leading zeros)")}while (isDIGIT($d)){$d++}if ($d eq '.'){$saw_decimal++;$d++}else {if ($strict){return BADVERSION($s,$errstr,"Invalid version format (dotted-decimal versions require at least three parts)")}else {goto version_prescan_finish}}{my$i=0;my$j=0;while (isDIGIT($d)){$i++;while (isDIGIT($d)){$d++;$j++;if ($strict && $j > 3){return BADVERSION($s,$errstr,"Invalid version format (maximum 3 digits between decimals)")}}if ($d eq '_'){if ($strict){return BADVERSION($s,$errstr,"Invalid version format (no underscores)")}if ($alpha){return BADVERSION($s,$errstr,"Invalid version format (multiple underscores)")}$d++;$alpha=TRUE}elsif ($d eq '.'){if ($alpha){return BADVERSION($s,$errstr,"Invalid version format (underscores before decimal)")}$saw_decimal++;$d++}elsif (!isDIGIT($d)){last}$j=0}if ($strict && $i < 2){return BADVERSION($s,$errstr,"Invalid version format (dotted-decimal versions require at least three parts)")}}}else {my$j=0;if ($strict){if ($d eq '.'){return BADVERSION($s,$errstr,"Invalid version format (0 before decimal required)")}if ($d eq '0' && isDIGIT($d+1)){return BADVERSION($s,$errstr,"Invalid version format (no leading zeros)")}}if ($d eq '-'){return BADVERSION($s,$errstr,"Invalid version format (negative version number)")}while (isDIGIT($d)){$d++}if ($d eq '.'){$saw_decimal++;$d++}elsif (!$d || $d eq ';' || isSPACE($d)|| $d eq '}'){if ($d==$s){return BADVERSION($s,$errstr,"Invalid version format (version required)")}goto version_prescan_finish}elsif ($d==$s){return BADVERSION($s,$errstr,"Invalid version format (non-numeric data)")}elsif ($d eq '_'){if ($strict){return BADVERSION($s,$errstr,"Invalid version format (no underscores)")}elsif (isDIGIT($d+1)){return BADVERSION($s,$errstr,"Invalid version format (alpha without decimal)")}else {return BADVERSION($s,$errstr,"Invalid version format (misplaced underscore)")}}elsif ($d){return BADVERSION($s,$errstr,"Invalid version format (non-numeric data)")}if ($d &&!isDIGIT($d)&& ($strict ||!($d eq ';' || isSPACE($d)|| $d eq '}'))){return BADVERSION($s,$errstr,"Invalid version format (fractional part required)")}while (isDIGIT($d)){$d++;$j++;if ($d eq '.' && isDIGIT($d-1)){if ($alpha){return BADVERSION($s,$errstr,"Invalid version format (underscores before decimal)")}if ($strict){return BADVERSION($s,$errstr,"Invalid version format (dotted-decimal versions must begin with 'v')")}$d=$s;$qv=TRUE;goto dotted_decimal_version}if ($d eq '_'){if ($strict){return BADVERSION($s,$errstr,"Invalid version format (no underscores)")}if ($alpha){return BADVERSION($s,$errstr,"Invalid version format (multiple underscores)")}if (!isDIGIT($d+1)){return BADVERSION($s,$errstr,"Invalid version format (misplaced underscore)")}$width=$j;$d++;$alpha=TRUE}}}version_prescan_finish: while (isSPACE($d)){$d++}if ($d &&!isDIGIT($d)&& (!($d eq ';' || $d eq '}'))){return BADVERSION($s,$errstr,"Invalid version format (non-numeric data)")}if ($saw_decimal > 1 && ($d-1)eq '.'){return BADVERSION($s,$errstr,"Invalid version format (trailing decimal)")}if (defined$sqv){$$sqv=$qv}if (defined$swidth){$$swidth=$width}if (defined$ssaw_decimal){$$ssaw_decimal=$saw_decimal}if (defined$salpha){$$salpha=$alpha}return$d}sub scan_version {my ($s,$rv,$qv)=@_;my$start;my$pos;my$last;my$errstr;my$saw_decimal=0;my$width=3;my$alpha=FALSE;my$vinf=FALSE;my@av;$s=new charstar$s;while (isSPACE($s)){$s++}$last=prescan_version($s,FALSE,\$errstr,\$qv,\$saw_decimal,\$width,\$alpha);if ($errstr){if ($s ne 'undef'){require Carp;Carp::croak($errstr)}}$start=$s;if ($s eq 'v'){$s++}$pos=$s;if ($qv){$$rv->{qv}=$qv}if ($alpha){$$rv->{alpha}=$alpha}if (!$qv && $width < 3){$$rv->{width}=$width}while (isDIGIT($pos)|| $pos eq '_'){$pos++}if (!isALPHA($pos)){my$rev;for (;;){$rev=0;{my$end=$pos;my$mult=1;my$orev;if (!$qv && $s > $start && $saw_decimal==1){$mult *= 100;while ($s < $end){next if$s eq '_';$orev=$rev;$rev += $s * $mult;$mult /= 10;if ((abs($orev)> abs($rev))|| (abs($rev)> $VERSION_MAX)){warn("Integer overflow in version %d",$VERSION_MAX);$s=$end - 1;$rev=$VERSION_MAX;$vinf=1}$s++;if ($s eq '_'){$s++}}}else {while (--$end >= $s){next if$end eq '_';$orev=$rev;$rev += $end * $mult;$mult *= 10;if ((abs($orev)> abs($rev))|| (abs($rev)> $VERSION_MAX)){warn("Integer overflow in version");$end=$s - 1;$rev=$VERSION_MAX;$vinf=1}}}}push@av,$rev;if ($vinf){$s=$last;last}elsif ($pos eq '.'){$s=++$pos}elsif ($pos eq '_' && isDIGIT($pos+1)){$s=++$pos}elsif ($pos eq ',' && isDIGIT($pos+1)){$s=++$pos}elsif (isDIGIT($pos)){$s=$pos}else {$s=$pos;last}if ($qv){while (isDIGIT($pos)|| $pos eq '_'){$pos++}}else {my$digits=0;while ((isDIGIT($pos)|| $pos eq '_')&& $digits < 3){if ($pos ne '_'){$digits++}$pos++}}}}if ($qv){my$len=$#av;$len=2 - $len;while ($len-- > 0){push@av,0}}if ($vinf){$$rv->{original}="v.Inf";$$rv->{vinf}=1}elsif ($s > $start){$$rv->{original}=$start->currstr($s);if ($qv && $saw_decimal==1 && $start ne 'v'){$$rv->{original}='v' .$$rv->{original}}}else {$$rv->{original}='0';push(@av,0)}$$rv->{version}=\@av;if ($s eq 'undef'){$s += 5}return$s}sub new {my$class=shift;unless (defined$class or $#_ > 1){require Carp;Carp::croak('Usage: version::new(class, version)')}my$self=bless ({},ref ($class)|| $class);my$qv=FALSE;if ($#_==1){$qv=TRUE}my$value=pop;if (ref($value)&& eval('$value->isa("version")')){$self->{version}=[@{$value->{version}}];$self->{qv}=1 if$value->{qv};$self->{alpha}=1 if$value->{alpha};$self->{original}=''.$value->{original};return$self}if (not defined$value or $value =~ /^undef$/){push @{$self->{version}},0;$self->{original}="0";return ($self)}if (ref($value)=~ m/ARRAY|HASH/){require Carp;Carp::croak("Invalid version format (non-numeric data)")}$value=_un_vstring($value);if ($Config{d_setlocale}){use POSIX qw/locale_h/;use if$Config{d_setlocale},'locale';my$currlocale=setlocale(LC_ALL);if (localeconv()->{decimal_point}eq ','){$value =~ tr/,/./}}if ($value =~ /\d+.?\d*e[-+]?\d+/){$value=sprintf("%.9f",$value);$value =~ s/(0+)$//}my$s=scan_version($value,\$self,$qv);if ($s){warn(sprintf "Version string '%s' contains invalid data; " ."ignoring: '%s'",$value,$s)}return ($self)}*parse=\&new;sub numify {my ($self)=@_;unless (_verify($self)){require Carp;Carp::croak("Invalid version object")}my$alpha=$self->{alpha}|| "";my$len=$#{$self->{version}};my$digit=$self->{version}[0];my$string=sprintf("%d.",$digit);if ($alpha and warnings::enabled()){warnings::warn($WARN_CATEGORY,'alpha->numify() is lossy')}for (my$i=1 ;$i <= $len ;$i++ ){$digit=$self->{version}[$i];$string .= sprintf("%03d",$digit)}if ($len==0){$string .= sprintf("000")}return$string}sub normal {my ($self)=@_;unless (_verify($self)){require Carp;Carp::croak("Invalid version object")}my$len=$#{$self->{version}};my$digit=$self->{version}[0];my$string=sprintf("v%d",$digit);for (my$i=1 ;$i <= $len ;$i++ ){$digit=$self->{version}[$i];$string .= sprintf(".%d",$digit)}if ($len <= 2){for ($len=2 - $len;$len!=0;$len-- ){$string .= sprintf(".%0d",0)}}return$string}sub stringify {my ($self)=@_;unless (_verify($self)){require Carp;Carp::croak("Invalid version object")}return exists$self->{original}? $self->{original}: exists$self->{qv}? $self->normal : $self->numify}sub vcmp {my ($left,$right,$swap)=@_;die "Usage: version::vcmp(lobj, robj, ...)" if @_ < 2;my$class=ref($left);unless (UNIVERSAL::isa($right,$class)){$right=$class->new($right)}if ($swap){($left,$right)=($right,$left)}unless (_verify($left)){require Carp;Carp::croak("Invalid version object")}unless (_verify($right)){require Carp;Carp::croak("Invalid version format")}my$l=$#{$left->{version}};my$r=$#{$right->{version}};my$m=$l < $r ? $l : $r;my$lalpha=$left->is_alpha;my$ralpha=$right->is_alpha;my$retval=0;my$i=0;while ($i <= $m && $retval==0){$retval=$left->{version}[$i]<=> $right->{version}[$i];$i++}if ($retval==0 && $l!=$r){if ($l < $r){while ($i <= $r && $retval==0){if ($right->{version}[$i]!=0){$retval=-1}$i++}}else {while ($i <= $l && $retval==0){if ($left->{version}[$i]!=0){$retval=+1}$i++}}}return$retval}sub vbool {my ($self)=@_;return vcmp($self,$self->new("0"),1)}sub vnoop {require Carp;Carp::croak("operation not supported with version object")}sub is_alpha {my ($self)=@_;return (exists$self->{alpha})}sub qv {my$value=shift;my$class=$CLASS;if (@_){$class=ref($value)|| $value;$value=shift}$value=_un_vstring($value);$value='v'.$value unless$value =~ /(^v|\d+\.\d+\.\d)/;my$obj=$CLASS->new($value);return bless$obj,$class}*declare=\&qv;sub is_qv {my ($self)=@_;return (exists$self->{qv})}sub _verify {my ($self)=@_;if (ref($self)&& eval {exists$self->{version}}&& ref($self->{version})eq 'ARRAY'){return 1}else {return 0}}sub _is_non_alphanumeric {my$s=shift;$s=new charstar$s;while ($s){return 0 if isSPACE($s);return 1 unless (isALPHA($s)|| isDIGIT($s)|| $s =~ /[.-]/);$s++}return 0}sub _un_vstring {my$value=shift;if (length($value)>= 1 && $value !~ /[,._]/ && _is_non_alphanumeric($value)){my$tvalue;if ($] >= 5.008_001){$tvalue=_find_magic_vstring($value);$value=$tvalue if length$tvalue}elsif ($] >= 5.006_000){$tvalue=sprintf("v%vd",$value);if ($tvalue =~ /^v\d+(\.\d+)*$/){$value=$tvalue}}}return$value}sub _find_magic_vstring {my$value=shift;my$tvalue='';require B;my$sv=B::svref_2object(\$value);my$magic=ref($sv)eq 'B::PVMG' ? $sv->MAGIC : undef;while ($magic){if ($magic->TYPE eq 'V'){$tvalue=$magic->PTR;$tvalue =~ s/^v?(.+)$/v$1/;last}else {$magic=$magic->MOREMAGIC}}$tvalue =~ tr/_//d;return$tvalue}sub _VERSION {my ($obj,$req)=@_;my$class=ref($obj)|| $obj;no strict 'refs';if (exists$INC{"$class.pm"}and not %{"$class\::"}and $] >= 5.008){require Carp;Carp::croak("$class defines neither package nor VERSION" ."--version check failed")}my$version=eval "\$$class\::VERSION";if (defined$version){local $^W if $] <= 5.008;$version=version::vpp->new($version)}if (defined$req){unless (defined$version){require Carp;my$msg=$] < 5.006 ? "$class version $req required--this is only version " : "$class does not define \$$class\::VERSION" ."--version check failed";if ($ENV{VERSION_DEBUG}){Carp::confess($msg)}else {Carp::croak($msg)}}$req=version::vpp->new($req);if ($req > $version){require Carp;if ($req->is_qv){Carp::croak(sprintf ("%s version %s required--"."this is only version %s",$class,$req->normal,$version->normal))}else {Carp::croak(sprintf ("%s version %s required--"."this is only version %s",$class,$req->stringify,$version->stringify))}}}return defined$version ? $version->stringify : undef}1;
+  package charstar;use overload ('""'=>\&thischar,'0+'=>\&thischar,'++'=>\&increment,'--'=>\&decrement,'+'=>\&plus,'-'=>\&minus,'*'=>\&multiply,'cmp'=>\&cmp,'<=>'=>\&spaceship,'bool'=>\&thischar,'='=>\&clone,);sub new {my ($self,$string)=@_;my$class=ref($self)|| $self;my$obj={string=>[split(//,$string)],current=>0,};return bless$obj,$class}sub thischar {my ($self)=@_;my$last=$#{$self->{string}};my$curr=$self->{current};if ($curr >= 0 && $curr <= $last){return$self->{string}->[$curr]}else {return ''}}sub increment {my ($self)=@_;$self->{current}++}sub decrement {my ($self)=@_;$self->{current}--}sub plus {my ($self,$offset)=@_;my$rself=$self->clone;$rself->{current}+= $offset;return$rself}sub minus {my ($self,$offset)=@_;my$rself=$self->clone;$rself->{current}-= $offset;return$rself}sub multiply {my ($left,$right,$swapped)=@_;my$char=$left->thischar();return$char * $right}sub spaceship {my ($left,$right,$swapped)=@_;unless (ref($right)){$right=$left->new($right)}return$left->{current}<=> $right->{current}}sub cmp {my ($left,$right,$swapped)=@_;unless (ref($right)){if (length($right)==1){return$left->thischar cmp $right}$right=$left->new($right)}return$left->currstr cmp $right->currstr}sub bool {my ($self)=@_;my$char=$self->thischar;return ($char ne '')}sub clone {my ($left,$right,$swapped)=@_;$right={string=>[@{$left->{string}}],current=>$left->{current},};return bless$right,ref($left)}sub currstr {my ($self,$s)=@_;my$curr=$self->{current};my$last=$#{$self->{string}};if (defined($s)&& $s->{current}< $last){$last=$s->{current}}my$string=join('',@{$self->{string}}[$curr..$last]);return$string}package version::vpp;use 5.006002;use strict;use warnings::register;use Config;our$VERSION=0.9929;our$CLASS='version::vpp';our ($LAX,$STRICT,$WARN_CATEGORY);if ($] > 5.015){warnings::register_categories(qw/version/);$WARN_CATEGORY='version'}else {$WARN_CATEGORY='numeric'}require version::regex;*version::vpp::is_strict=\&version::regex::is_strict;*version::vpp::is_lax=\&version::regex::is_lax;*LAX=\$version::regex::LAX;*STRICT=\$version::regex::STRICT;use overload ('""'=>\&stringify,'0+'=>\&numify,'cmp'=>\&vcmp,'<=>'=>\&vcmp,'bool'=>\&vbool,'+'=>\&vnoop,'-'=>\&vnoop,'*'=>\&vnoop,'/'=>\&vnoop,'+='=>\&vnoop,'-='=>\&vnoop,'*='=>\&vnoop,'/='=>\&vnoop,'abs'=>\&vnoop,);sub import {no strict 'refs';my ($class)=shift;unless ($class eq $CLASS){local $^W;*{$class.'::declare'}=\&{$CLASS.'::declare'};*{$class.'::qv'}=\&{$CLASS.'::qv'}}my%args;if (@_){map {$args{$_}=1}@_}else {%args=(qv=>1,'UNIVERSAL::VERSION'=>1,)}my$callpkg=caller();if (exists($args{declare})){*{$callpkg.'::declare'}=sub {return$class->declare(shift)}unless defined(&{$callpkg.'::declare'})}if (exists($args{qv})){*{$callpkg.'::qv'}=sub {return$class->qv(shift)}unless defined(&{$callpkg.'::qv'})}if (exists($args{'UNIVERSAL::VERSION'})){no warnings qw/redefine/;*UNIVERSAL::VERSION =\&{$CLASS.'::_VERSION'}}if (exists($args{'VERSION'})){*{$callpkg.'::VERSION'}=\&{$CLASS.'::_VERSION'}}if (exists($args{'is_strict'})){*{$callpkg.'::is_strict'}=\&{$CLASS.'::is_strict'}unless defined(&{$callpkg.'::is_strict'})}if (exists($args{'is_lax'})){*{$callpkg.'::is_lax'}=\&{$CLASS.'::is_lax'}unless defined(&{$callpkg.'::is_lax'})}}my$VERSION_MAX=0x7FFFFFFF;use constant TRUE=>1;use constant FALSE=>0;sub isDIGIT {my ($char)=shift->thischar();return ($char =~ /\d/)}sub isALPHA {my ($char)=shift->thischar();return ($char =~ /[a-zA-Z]/)}sub isSPACE {my ($char)=shift->thischar();return ($char =~ /\s/)}sub BADVERSION {my ($s,$errstr,$error)=@_;if ($errstr){$$errstr=$error}return$s}sub prescan_version {my ($s,$strict,$errstr,$sqv,$ssaw_decimal,$swidth,$salpha)=@_;my$qv=defined$sqv ? $$sqv : FALSE;my$saw_decimal=defined$ssaw_decimal ? $$ssaw_decimal : 0;my$width=defined$swidth ? $$swidth : 3;my$alpha=defined$salpha ? $$salpha : FALSE;my$d=$s;if ($qv && isDIGIT($d)){goto dotted_decimal_version}if ($d eq 'v'){$d++;if (isDIGIT($d)){$qv=TRUE}else {return BADVERSION($s,$errstr,"Invalid version format (dotted-decimal versions require at least three parts)")}dotted_decimal_version: if ($strict && $d eq '0' && isDIGIT($d+1)){return BADVERSION($s,$errstr,"Invalid version format (no leading zeros)")}while (isDIGIT($d)){$d++}if ($d eq '.'){$saw_decimal++;$d++}else {if ($strict){return BADVERSION($s,$errstr,"Invalid version format (dotted-decimal versions require at least three parts)")}else {goto version_prescan_finish}}{my$i=0;my$j=0;while (isDIGIT($d)){$i++;while (isDIGIT($d)){$d++;$j++;if ($strict && $j > 3){return BADVERSION($s,$errstr,"Invalid version format (maximum 3 digits between decimals)")}}if ($d eq '_'){if ($strict){return BADVERSION($s,$errstr,"Invalid version format (no underscores)")}if ($alpha){return BADVERSION($s,$errstr,"Invalid version format (multiple underscores)")}$d++;$alpha=TRUE}elsif ($d eq '.'){if ($alpha){return BADVERSION($s,$errstr,"Invalid version format (underscores before decimal)")}$saw_decimal++;$d++}elsif (!isDIGIT($d)){last}$j=0}if ($strict && $i < 2){return BADVERSION($s,$errstr,"Invalid version format (dotted-decimal versions require at least three parts)")}}}else {my$j=0;if ($strict){if ($d eq '.'){return BADVERSION($s,$errstr,"Invalid version format (0 before decimal required)")}if ($d eq '0' && isDIGIT($d+1)){return BADVERSION($s,$errstr,"Invalid version format (no leading zeros)")}}if ($d eq '-'){return BADVERSION($s,$errstr,"Invalid version format (negative version number)")}while (isDIGIT($d)){$d++}if ($d eq '.'){$saw_decimal++;$d++}elsif (!$d || $d eq ';' || isSPACE($d)|| $d eq '}'){if ($d==$s){return BADVERSION($s,$errstr,"Invalid version format (version required)")}goto version_prescan_finish}elsif ($d==$s){return BADVERSION($s,$errstr,"Invalid version format (non-numeric data)")}elsif ($d eq '_'){if ($strict){return BADVERSION($s,$errstr,"Invalid version format (no underscores)")}elsif (isDIGIT($d+1)){return BADVERSION($s,$errstr,"Invalid version format (alpha without decimal)")}else {return BADVERSION($s,$errstr,"Invalid version format (misplaced underscore)")}}elsif ($d){return BADVERSION($s,$errstr,"Invalid version format (non-numeric data)")}if ($d &&!isDIGIT($d)&& ($strict ||!($d eq ';' || isSPACE($d)|| $d eq '}'))){return BADVERSION($s,$errstr,"Invalid version format (fractional part required)")}while (isDIGIT($d)){$d++;$j++;if ($d eq '.' && isDIGIT($d-1)){if ($alpha){return BADVERSION($s,$errstr,"Invalid version format (underscores before decimal)")}if ($strict){return BADVERSION($s,$errstr,"Invalid version format (dotted-decimal versions must begin with 'v')")}$d=$s;$qv=TRUE;goto dotted_decimal_version}if ($d eq '_'){if ($strict){return BADVERSION($s,$errstr,"Invalid version format (no underscores)")}if ($alpha){return BADVERSION($s,$errstr,"Invalid version format (multiple underscores)")}if (!isDIGIT($d+1)){return BADVERSION($s,$errstr,"Invalid version format (misplaced underscore)")}$width=$j;$d++;$alpha=TRUE}}}version_prescan_finish: while (isSPACE($d)){$d++}if ($d &&!isDIGIT($d)&& (!($d eq ';' || $d eq '}'))){return BADVERSION($s,$errstr,"Invalid version format (non-numeric data)")}if ($saw_decimal > 1 && ($d-1)eq '.'){return BADVERSION($s,$errstr,"Invalid version format (trailing decimal)")}if (defined$sqv){$$sqv=$qv}if (defined$swidth){$$swidth=$width}if (defined$ssaw_decimal){$$ssaw_decimal=$saw_decimal}if (defined$salpha){$$salpha=$alpha}return$d}sub scan_version {my ($s,$rv,$qv)=@_;my$start;my$pos;my$last;my$errstr;my$saw_decimal=0;my$width=3;my$alpha=FALSE;my$vinf=FALSE;my@av;$s=new charstar$s;while (isSPACE($s)){$s++}$last=prescan_version($s,FALSE,\$errstr,\$qv,\$saw_decimal,\$width,\$alpha);if ($errstr){if ($s ne 'undef'){require Carp;Carp::croak($errstr)}}$start=$s;if ($s eq 'v'){$s++}$pos=$s;if ($qv){$$rv->{qv}=$qv}if ($alpha){$$rv->{alpha}=$alpha}if (!$qv && $width < 3){$$rv->{width}=$width}while (isDIGIT($pos)|| $pos eq '_'){$pos++}if (!isALPHA($pos)){my$rev;for (;;){$rev=0;{my$end=$pos;my$mult=1;my$orev;if (!$qv && $s > $start && $saw_decimal==1){$mult *= 100;while ($s < $end){next if$s eq '_';$orev=$rev;$rev += $s * $mult;$mult /= 10;if ((abs($orev)> abs($rev))|| (abs($rev)> $VERSION_MAX)){warn("Integer overflow in version %d",$VERSION_MAX);$s=$end - 1;$rev=$VERSION_MAX;$vinf=1}$s++;if ($s eq '_'){$s++}}}else {while (--$end >= $s){next if$end eq '_';$orev=$rev;$rev += $end * $mult;$mult *= 10;if ((abs($orev)> abs($rev))|| (abs($rev)> $VERSION_MAX)){warn("Integer overflow in version");$end=$s - 1;$rev=$VERSION_MAX;$vinf=1}}}}push@av,$rev;if ($vinf){$s=$last;last}elsif ($pos eq '.'){$s=++$pos}elsif ($pos eq '_' && isDIGIT($pos+1)){$s=++$pos}elsif ($pos eq ',' && isDIGIT($pos+1)){$s=++$pos}elsif (isDIGIT($pos)){$s=$pos}else {$s=$pos;last}if ($qv){while (isDIGIT($pos)|| $pos eq '_'){$pos++}}else {my$digits=0;while ((isDIGIT($pos)|| $pos eq '_')&& $digits < 3){if ($pos ne '_'){$digits++}$pos++}}}}if ($qv){my$len=$#av;$len=2 - $len;while ($len-- > 0){push@av,0}}if ($vinf){$$rv->{original}="v.Inf";$$rv->{vinf}=1}elsif ($s > $start){$$rv->{original}=$start->currstr($s);if ($qv && $saw_decimal==1 && $start ne 'v'){$$rv->{original}='v' .$$rv->{original}}}else {$$rv->{original}='0';push(@av,0)}$$rv->{version}=\@av;if ($s eq 'undef'){$s += 5}return$s}sub new {my$class=shift;unless (defined$class or $#_ > 1){require Carp;Carp::croak('Usage: version::new(class, version)')}my$self=bless ({},ref ($class)|| $class);my$qv=FALSE;if ($#_==1){$qv=TRUE}my$value=pop;if (ref($value)&& eval('$value->isa("version")')){$self->{version}=[@{$value->{version}}];$self->{qv}=1 if$value->{qv};$self->{alpha}=1 if$value->{alpha};$self->{original}=''.$value->{original};return$self}if (not defined$value or $value =~ /^undef$/){push @{$self->{version}},0;$self->{original}="0";return ($self)}if (ref($value)=~ m/ARRAY|HASH/){require Carp;Carp::croak("Invalid version format (non-numeric data)")}$value=_un_vstring($value);if ($Config{d_setlocale}){use POSIX qw/locale_h/;use if$Config{d_setlocale},'locale';my$currlocale=setlocale(LC_ALL);if (localeconv()->{decimal_point}eq ','){$value =~ tr/,/./}}if ($value =~ /\d+.?\d*e[-+]?\d+/){$value=sprintf("%.9f",$value);$value =~ s/(0+)$//}my$s=scan_version($value,\$self,$qv);if ($s){warn(sprintf "Version string '%s' contains invalid data; " ."ignoring: '%s'",$value,$s)}return ($self)}*parse=\&new;sub numify {my ($self)=@_;unless (_verify($self)){require Carp;Carp::croak("Invalid version object")}my$alpha=$self->{alpha}|| "";my$len=$#{$self->{version}};my$digit=$self->{version}[0];my$string=sprintf("%d.",$digit);if ($alpha and warnings::enabled()){warnings::warn($WARN_CATEGORY,'alpha->numify() is lossy')}for (my$i=1 ;$i <= $len ;$i++ ){$digit=$self->{version}[$i];$string .= sprintf("%03d",$digit)}if ($len==0){$string .= sprintf("000")}return$string}sub normal {my ($self)=@_;unless (_verify($self)){require Carp;Carp::croak("Invalid version object")}my$len=$#{$self->{version}};my$digit=$self->{version}[0];my$string=sprintf("v%d",$digit);for (my$i=1 ;$i <= $len ;$i++ ){$digit=$self->{version}[$i];$string .= sprintf(".%d",$digit)}if ($len <= 2){for ($len=2 - $len;$len!=0;$len-- ){$string .= sprintf(".%0d",0)}}return$string}sub stringify {my ($self)=@_;unless (_verify($self)){require Carp;Carp::croak("Invalid version object")}return exists$self->{original}? $self->{original}: exists$self->{qv}? $self->normal : $self->numify}sub vcmp {my ($left,$right,$swap)=@_;die "Usage: version::vcmp(lobj, robj, ...)" if @_ < 2;my$class=ref($left);unless (UNIVERSAL::isa($right,$class)){$right=$class->new($right)}if ($swap){($left,$right)=($right,$left)}unless (_verify($left)){require Carp;Carp::croak("Invalid version object")}unless (_verify($right)){require Carp;Carp::croak("Invalid version format")}my$l=$#{$left->{version}};my$r=$#{$right->{version}};my$m=$l < $r ? $l : $r;my$lalpha=$left->is_alpha;my$ralpha=$right->is_alpha;my$retval=0;my$i=0;while ($i <= $m && $retval==0){$retval=$left->{version}[$i]<=> $right->{version}[$i];$i++}if ($retval==0 && $l!=$r){if ($l < $r){while ($i <= $r && $retval==0){if ($right->{version}[$i]!=0){$retval=-1}$i++}}else {while ($i <= $l && $retval==0){if ($left->{version}[$i]!=0){$retval=+1}$i++}}}return$retval}sub vbool {my ($self)=@_;return vcmp($self,$self->new("0"),1)}sub vnoop {require Carp;Carp::croak("operation not supported with version object")}sub is_alpha {my ($self)=@_;return (exists$self->{alpha})}sub qv {my$value=shift;my$class=$CLASS;if (@_){$class=ref($value)|| $value;$value=shift}$value=_un_vstring($value);$value='v'.$value unless$value =~ /(^v|\d+\.\d+\.\d)/;my$obj=$CLASS->new($value);return bless$obj,$class}*declare=\&qv;sub is_qv {my ($self)=@_;return (exists$self->{qv})}sub _verify {my ($self)=@_;if (ref($self)&& eval {exists$self->{version}}&& ref($self->{version})eq 'ARRAY'){return 1}else {return 0}}sub _is_non_alphanumeric {my$s=shift;$s=new charstar$s;while ($s){return 0 if isSPACE($s);return 1 unless (isALPHA($s)|| isDIGIT($s)|| $s =~ /[.-]/);$s++}return 0}sub _un_vstring {my$value=shift;if (length($value)>= 1 && $value !~ /[,._]/ && _is_non_alphanumeric($value)){my$tvalue;if ($] >= 5.008_001){$tvalue=_find_magic_vstring($value);$value=$tvalue if length$tvalue}elsif ($] >= 5.006_000){$tvalue=sprintf("v%vd",$value);if ($tvalue =~ /^v\d+(\.\d+)*$/){$value=$tvalue}}}return$value}sub _find_magic_vstring {my$value=shift;my$tvalue='';require B;my$sv=B::svref_2object(\$value);my$magic=ref($sv)eq 'B::PVMG' ? $sv->MAGIC : undef;while ($magic){if ($magic->TYPE eq 'V'){$tvalue=$magic->PTR;$tvalue =~ s/^v?(.+)$/v$1/;last}else {$magic=$magic->MOREMAGIC}}$tvalue =~ tr/_//d;return$tvalue}sub _VERSION {my ($obj,$req)=@_;my$class=ref($obj)|| $obj;no strict 'refs';if (exists$INC{"$class.pm"}and not %{"$class\::"}and $] >= 5.008){require Carp;Carp::croak("$class defines neither package nor VERSION" ."--version check failed")}my$version=eval "\$$class\::VERSION";if (defined$version){local $^W if $] <= 5.008;$version=version::vpp->new($version)}if (defined$req){unless (defined$version){require Carp;my$msg=$] < 5.006 ? "$class version $req required--this is only version " : "$class does not define \$$class\::VERSION" ."--version check failed";if ($ENV{VERSION_DEBUG}){Carp::confess($msg)}else {Carp::croak($msg)}}$req=version::vpp->new($req);if ($req > $version){require Carp;if ($req->is_qv){Carp::croak(sprintf ("%s version %s required--"."this is only version %s",$class,$req->normal,$version->normal))}else {Carp::croak(sprintf ("%s version %s required--"."this is only version %s",$class,$req->stringify,$version->stringify))}}}return defined$version ? $version->stringify : undef}1;
 VERSION_VPP
 
 s/^  //mg for values %fatpacked;
@@ -11827,165 +11831,220 @@ unshift @INC, bless \%fatpacked, $class;
 use strict;
 use warnings;
 
-use CPAN::Perl::Releases::MetaCPAN qw(perl_tarballs);
+use CPAN::Perl::Releases::MetaCPAN;
 use Devel::PatchPerl;
 use File::Basename qw(basename);
 use File::Path qw(mkpath rmtree);
-use File::Temp qw(tempfile);
+use File::Spec;
+use File::Temp qw(tempdir);
 use File::pushd qw(pushd);
 use HTTP::Tinyish;
-use version ();
+use IO::Handle;
+use POSIX qw(strftime);
+use Parallel::Pipes;
 
-my $ROOT = $ENV{PLENV_ROOT} || "$ENV{HOME}/.plenv";
-my $VERSIONS = "$ROOT/versions";
+sub catpath { File::Spec->catfile(@_) }
 
-sub run { warn "@_\n"; !system { $_[0] } @_ or die "FAIL @_\n" }
-
-sub wrap {
-    my ($file, $code) = @_;
-    open my $fh, ">>", $file or die "$!: $file";
-    open my $save_stdout, ">&", \*STDOUT;
-    open my $save_stderr, ">&", \*STDERR;
-    open STDOUT, ">&", $fh;
-    open STDERR, ">&", \*STDOUT;
-    my $start = time;
-    my $res = eval { $code->() };
-    my $err = $@;
-    my $elapsed = time - $start;
-    open STDOUT, ">&", $save_stdout;
-    open STDERR, ">&", $save_stderr;
-    die $err if $@;
-    ($res, $elapsed);
+sub new {
+    my ($class, %argv) = @_;
+    my $root = $argv{root};
+    my $cache_dir = catpath $root, "cache";
+    my $build_dir = catpath $root, "build";
+    my $target_dir = catpath $root, "versions";
+    mkpath $_ for grep !-d, $cache_dir, $build_dir, $target_dir;
+    my $logfile = catpath $build_dir, time . ".log";
+    open my $logfh, ">>:unix", $logfile or die;
+    bless {
+        http => HTTP::Tinyish->new,
+        logfh => $logfh,
+        logfile => $logfile,
+        cache_dir => $cache_dir,
+        build_dir => $build_dir,
+        target_dir => $target_dir,
+        context => '',
+    }, $class;
 }
 
+sub _log {
+    my ($self, $line) = @_;
+    chomp $line;
+    $self->{logfh}->say("$$,$self->{context}," . strftime("%Y-%m-%dT%H:%M:%S", localtime) . "| " . $line);
+}
+
+sub _system {
+    my ($self, @cmd) = @_;
+    my $pid = open my $fh, "-|";
+    if ($pid == 0) {
+        open STDERR, ">&", \*STDOUT;
+        exec { $cmd[0] } @cmd;
+        exit 255;
+    }
+    $self->_log("=== Executing @cmd");
+    while (<$fh>) {
+        $self->_log($_);
+    }
+    close $fh;
+    $? == 0;
+}
+
+sub fetch {
+    my ($self, $url) = @_;
+    my $file = catpath $self->{cache_dir}, basename $url;
+    my $res = $self->{http}->mirror($url, $file);
+    ($file, $res->{success} ? undef : "$res->{status} $url");
+}
 
 sub build {
-    my ($version, @argv) = @_;
-    for my $dir (grep !-d, "$ROOT/cache", "$ROOT/versions") {
-        mkpath $dir or die;
-    }
+    my ($self, %argv) = @_;
 
-    my $shared = grep { $_ eq "-Duseshrplib"  } @argv;
-    my $thread = grep { $_ eq "-Duseithreads" } @argv;
-    my $prefix = sprintf "%s%s%s", $version,
-        $thread ? "-thr" : "", $shared ? "-shr" : "";
-    if (-f "$VERSIONS/$prefix.tar.xz") {
-        warn "Already exists $prefix.tar.xz\n";
-        return;
-    }
-    rmtree "$VERSIONS/$prefix" if -d "$VERSIONS/$prefix";
+    my $file = $argv{file};
+    my $prefix = $argv{prefix};
+    my $version = $argv{version};
+    my @configure = @{$argv{configure}};
 
-    my $gaurd = pushd "$ROOT/cache";
+    local $self->{context} = $prefix;
 
-    my ($cache) = glob "perl-$version.tar.*";
-    if (!$cache) {
-        my $hash = perl_tarballs($version) or die "Cannot find url for $version";
-        my ($cpan_path) = sort values %$hash;
-        $cpan_path =~ s/\.(gz|bz2)$/.xz/ if version->parse($version) >= version->parse("5.22.0");
-        $cache = basename($cpan_path);
-        my $url = "https://cpan.metacpan.org/authors/id/$cpan_path";
-        warn "Fetching $url\n";
-        my $res = HTTP::Tinyish->new(verify_SSL => 1)->mirror($url => $cache);
-        if (!$res->{success}) {
-            unlink $cache;
-            die "$res->{status} $res->{reason}, $url\n";
-        }
-    }
-    rmtree "perl-$version";
-    run "tar", "xf", $cache;
-    chdir "perl-$version" or die;
+    (my $base = basename $file) =~ s/\.tar\.(gz|bz2|xz)$//;
+    my $dir = tempdir "$base-XXXXX", CLEANUP => 0, DIR => $self->{build_dir};
+    chmod 0755, $dir;
+    $self->_system("tar", "xf", $file, "--strip-components=1", "-C", $dir) or die;
+
     {
-        local $ENV{PERL5_PATCHPERL_PLUGIN} = "Darwin::RemoveIncludeGuard";
-        Devel::PatchPerl->patch_source;
-    }
-
-    run "./Configure",
-        "-des",
-        "-DDEBUGGING=-g",
-        "-Dprefix=$VERSIONS/$prefix",
-        "-Dscriptdir=$VERSIONS/$prefix/bin",
-        "-Dman1dir=none", "-Dman3dir=none",
-        @argv,
-    ;
-
-    if ($ENV{NO_PARALLEL}) {
-        run "make", "install";
-    } else {
-        my $v = version->parse($version);
-        if ($v >= version->parse("5.20.0")) {
-            run "make", "-j8", "install";
-        } elsif ($v >= version->parse("5.16.0")) {
-            run "make", "-j8";
-            run "make", "install";
-        } else {
-            run "make", "install";
+        my $guard = pushd $dir;
+        {
+            local *STDOUT = local *STDERR = $self->{logfh};
+            local $ENV{PERL5_PATCHPERL_PLUGIN} = "Darwin::RemoveIncludeGuard";
+            Devel::PatchPerl->patch_source;
         }
+        $self->_system(
+            "sh",
+            "Configure",
+            "-des",
+            "-DDEBUGGING=-g",
+            "-Dprefix=" . catpath($self->{target_dir}, $prefix),
+            "-Dscriptdir=" . catpath($self->{target_dir}, $prefix, "bin"),
+            "-Dman1dir=none",
+            "-Dman3dir=none",
+            @configure,
+        ) or return;
+        $self->_system("make", "install") or return;
+        unlink catpath($self->{target_dir}, $prefix, "bin", "perl$version") or die;
     }
-    chdir ".." or die;
-    rmtree "perl-$version" or die;
-    chdir $VERSIONS or die;
-    unlink "$prefix/bin/perl$version" or die;
-    run "tar", "cJf", "$prefix.tar.xz", $prefix;
-    return 1;
+    $self->_system(
+        "tar", "cJf",
+        catpath($self->{target_dir}, "$prefix.tar.xz"),
+        "-C", $self->{target_dir},
+        $prefix,
+    ) or die;
+    rmtree $dir;
+    1;
 }
 
-sub build_all {
+sub all_perls {
     my $releases = CPAN::Perl::Releases::MetaCPAN->new->get;
     my %perl;
     for my $release (@$releases) {
         my $status = $release->{status};
         next if $status ne "cpan" && $status ne "latest";
         my $name = $release->{name};
-        my ($version, $minor, $patch) = $name =~ /^perl-(5\.(\d+)\.(\d+))$/ or next;
+        my ($version, $major, $minor, $patch)
+            = $name =~ /^perl-(([57])\.(\d+)\.(\d+))$/ or next;
         next if $minor % 2 != 0;
-        push @{$perl{$minor}}, {
-            version => $version,
-            url => $release->{download_url},
-            patch => $patch,
-        };
+        my $major_minor = sprintf "%d.%03d", $major, $minor;
+        my $url = $release->{download_url};
+        $url =~ s/\.(gz|bz2)$/.xz/ if $major_minor >= 5.022;
+        push @{$perl{$major_minor}}, { version => $version, url => $url, patch => $patch };
     }
     my @want;
-    push @want, sort { $a->{patch} <=> $b->{patch} } grep { $_->{patch} != 0 } @{$perl{8}};
-    push @want, sort { $a->{patch} <=> $b->{patch} } @{$perl{10}};
-    for my $minor (grep { $_ > 10 } sort keys %perl) {
-        my ($max) = sort { $b->{patch} <=> $a->{patch} } @{$perl{$minor}};
+    push @want, sort { $a->{patch} <=> $b->{patch} } grep { $_->{patch} != 0 } @{$perl{"5.008"}};
+    push @want, sort { $a->{patch} <=> $b->{patch} } @{$perl{"5.010"}};
+    for my $major_minor (grep { $_ > 5.010 } sort keys %perl) {
+        my ($max) = sort { $b->{patch} <=> $a->{patch} } @{$perl{$major_minor}};
         push @want, $max;
     }
+    @want;
+}
 
-    mkpath "$ROOT/build" unless -d "$ROOT/build";
-    my $logfile = "$ROOT/build/build.log.@{[time]}";
-    warn "Using $logfile\n";
-    for my $want (@want) {
-        my $v = $want->{version};
-        print STDERR "Building $v ...";
-        my ($done1, $took1) = wrap $logfile, sub { build $v };
-        if ($done1) {
-            print STDERR " DONE took $took1 seconds\n";
-        } else {
-            print STDERR " SKIP it\n";
-        }
+sub run_all {
+    my $self = shift;
 
-        print STDERR "Building $v -Duseithreads ...";
-        my ($done2, $took2) = wrap $logfile, sub { build $v, "-Duseithreads" };
-        if ($done2) {
-            print STDERR " DONE took $took2 seconds\n";
-        } else {
-            print STDERR " SKIP it\n";
+    my (@url, @build);
+    for my $perl ($self->all_perls) {
+        my $file0 = catpath $self->{cache_dir}, basename $perl->{url};
+        if (!-f $file0) {
+            push @url, {
+                version => $perl->{version},
+                url => $perl->{url},
+            };
         }
+        my $file1 = catpath $self->{target_dir}, "$perl->{version}.tar.xz";
+        if (!-f $file1) {
+            push @build, {
+                file => $file0,
+                version => $perl->{version},
+                prefix => $perl->{version},
+                configure => [],
+            };
+        }
+        my $file2 = catpath $self->{target_dir}, "$perl->{version}-thr.tar.xz";
+        if (!-f $file2) {
+            push @build, {
+                file => $file0,
+                version => $perl->{version},
+                prefix => "$perl->{version}-thr",
+                configure => ["-Duseithreads"],
+            };
+        }
+    }
+
+    if (@url) {
+        my @result = $self->_parallel(5, \@url, sub {
+            my $url = shift;
+            $self->_log("Fetching $url->{url}");
+            warn "$$ Fetching $url->{url}\n";
+            my (undef, $err) = $self->fetch($url->{url});
+            return { %$url, error => $err };
+        });
+        for my $result (@result) {
+            die "$result->{error}\n" if $result->{error};
+        }
+    }
+    if (!@build) {
+        warn "There is no need to build perls.\n";
+        return;
+    }
+    my @result = $self->_parallel(5, \@build, sub {
+        my $build = shift;
+        warn "$$ \e[1;33mSTART\e[m $build->{prefix}\n";
+        my $start = time;
+        my $ok = $self->build(%$build);
+        my $elapsed = time - $start;
+        warn sprintf "$$ %s %s %d secs\n",
+            $ok ? "\e[1;32mDONE\e[m " : "\e[1;31mFAIL\e[m ", $build->{prefix}, $elapsed;
+        return { %$build, error => $ok ? "" : "failed to build $build->{prefix}" };
+    });
+    for my $result (@result) {
+        die "$result->{error}\n" if $result->{error};
     }
 }
 
-my $HELP = <<"___";
-Usage:
-  $0 5.28.1
-  $0 5.28.1 -Duseithreads
-  $0 5.28.1 -Duseshrplib
-  $0 --all
-___
-
-die $HELP if !@ARGV or $ARGV[0] =~ /^(-h|--help)$/;
-if ($ARGV[0] eq "--all") {
-    build_all;
-} else {
-    build @ARGV;
+sub _parallel {
+    my ($self, $num, $tasks, $sub) = @_;
+    my $pipes = Parallel::Pipes->new($num, $sub);
+    my @result;
+    for my $task (@$tasks) {
+        my @ready = $pipes->is_ready;
+        push @result, $_->read for grep { $_->is_written } @ready;
+        $ready[0]->write($task);
+    }
+    while (my @written = $pipes->is_written) {
+        push @result, $_->read for @written;
+    }
+    $pipes->close;
+    @result;
 }
+
+my $root = $ENV{BUILD_ROOT} || $ENV{PLENV_ROOT} || catpath($ENV{HOME}, ".plenv");
+my $app = __PACKAGE__->new(root => $root);
+warn "Build.log is $app->{logfile}\n";
+$app->run_all;

@@ -2,165 +2,220 @@
 use strict;
 use warnings;
 
-use CPAN::Perl::Releases::MetaCPAN qw(perl_tarballs);
+use CPAN::Perl::Releases::MetaCPAN;
 use Devel::PatchPerl;
 use File::Basename qw(basename);
 use File::Path qw(mkpath rmtree);
-use File::Temp qw(tempfile);
+use File::Spec;
+use File::Temp qw(tempdir);
 use File::pushd qw(pushd);
 use HTTP::Tinyish;
-use version ();
+use IO::Handle;
+use POSIX qw(strftime);
+use Parallel::Pipes;
 
-my $ROOT = $ENV{PLENV_ROOT} || "$ENV{HOME}/.plenv";
-my $VERSIONS = "$ROOT/versions";
+sub catpath { File::Spec->catfile(@_) }
 
-sub run { warn "@_\n"; !system { $_[0] } @_ or die "FAIL @_\n" }
-
-sub wrap {
-    my ($file, $code) = @_;
-    open my $fh, ">>", $file or die "$!: $file";
-    open my $save_stdout, ">&", \*STDOUT;
-    open my $save_stderr, ">&", \*STDERR;
-    open STDOUT, ">&", $fh;
-    open STDERR, ">&", \*STDOUT;
-    my $start = time;
-    my $res = eval { $code->() };
-    my $err = $@;
-    my $elapsed = time - $start;
-    open STDOUT, ">&", $save_stdout;
-    open STDERR, ">&", $save_stderr;
-    die $err if $@;
-    ($res, $elapsed);
+sub new {
+    my ($class, %argv) = @_;
+    my $root = $argv{root};
+    my $cache_dir = catpath $root, "cache";
+    my $build_dir = catpath $root, "build";
+    my $target_dir = catpath $root, "versions";
+    mkpath $_ for grep !-d, $cache_dir, $build_dir, $target_dir;
+    my $logfile = catpath $build_dir, time . ".log";
+    open my $logfh, ">>:unix", $logfile or die;
+    bless {
+        http => HTTP::Tinyish->new,
+        logfh => $logfh,
+        logfile => $logfile,
+        cache_dir => $cache_dir,
+        build_dir => $build_dir,
+        target_dir => $target_dir,
+        context => '',
+    }, $class;
 }
 
+sub _log {
+    my ($self, $line) = @_;
+    chomp $line;
+    $self->{logfh}->say("$$,$self->{context}," . strftime("%Y-%m-%dT%H:%M:%S", localtime) . "| " . $line);
+}
+
+sub _system {
+    my ($self, @cmd) = @_;
+    my $pid = open my $fh, "-|";
+    if ($pid == 0) {
+        open STDERR, ">&", \*STDOUT;
+        exec { $cmd[0] } @cmd;
+        exit 255;
+    }
+    $self->_log("=== Executing @cmd");
+    while (<$fh>) {
+        $self->_log($_);
+    }
+    close $fh;
+    $? == 0;
+}
+
+sub fetch {
+    my ($self, $url) = @_;
+    my $file = catpath $self->{cache_dir}, basename $url;
+    my $res = $self->{http}->mirror($url, $file);
+    ($file, $res->{success} ? undef : "$res->{status} $url");
+}
 
 sub build {
-    my ($version, @argv) = @_;
-    for my $dir (grep !-d, "$ROOT/cache", "$ROOT/versions") {
-        mkpath $dir or die;
-    }
+    my ($self, %argv) = @_;
 
-    my $shared = grep { $_ eq "-Duseshrplib"  } @argv;
-    my $thread = grep { $_ eq "-Duseithreads" } @argv;
-    my $prefix = sprintf "%s%s%s", $version,
-        $thread ? "-thr" : "", $shared ? "-shr" : "";
-    if (-f "$VERSIONS/$prefix.tar.xz") {
-        warn "Already exists $prefix.tar.xz\n";
-        return;
-    }
-    rmtree "$VERSIONS/$prefix" if -d "$VERSIONS/$prefix";
+    my $file = $argv{file};
+    my $prefix = $argv{prefix};
+    my $version = $argv{version};
+    my @configure = @{$argv{configure}};
 
-    my $gaurd = pushd "$ROOT/cache";
+    local $self->{context} = $prefix;
 
-    my ($cache) = glob "perl-$version.tar.*";
-    if (!$cache) {
-        my $hash = perl_tarballs($version) or die "Cannot find url for $version";
-        my ($cpan_path) = sort values %$hash;
-        $cpan_path =~ s/\.(gz|bz2)$/.xz/ if version->parse($version) >= version->parse("5.22.0");
-        $cache = basename($cpan_path);
-        my $url = "https://cpan.metacpan.org/authors/id/$cpan_path";
-        warn "Fetching $url\n";
-        my $res = HTTP::Tinyish->new(verify_SSL => 1)->mirror($url => $cache);
-        if (!$res->{success}) {
-            unlink $cache;
-            die "$res->{status} $res->{reason}, $url\n";
-        }
-    }
-    rmtree "perl-$version";
-    run "tar", "xf", $cache;
-    chdir "perl-$version" or die;
+    (my $base = basename $file) =~ s/\.tar\.(gz|bz2|xz)$//;
+    my $dir = tempdir "$base-XXXXX", CLEANUP => 0, DIR => $self->{build_dir};
+    chmod 0755, $dir;
+    $self->_system("tar", "xf", $file, "--strip-components=1", "-C", $dir) or die;
+
     {
-        local $ENV{PERL5_PATCHPERL_PLUGIN} = "Darwin::RemoveIncludeGuard";
-        Devel::PatchPerl->patch_source;
-    }
-
-    run "./Configure",
-        "-des",
-        "-DDEBUGGING=-g",
-        "-Dprefix=$VERSIONS/$prefix",
-        "-Dscriptdir=$VERSIONS/$prefix/bin",
-        "-Dman1dir=none", "-Dman3dir=none",
-        @argv,
-    ;
-
-    if ($ENV{NO_PARALLEL}) {
-        run "make", "install";
-    } else {
-        my $v = version->parse($version);
-        if ($v >= version->parse("5.20.0")) {
-            run "make", "-j8", "install";
-        } elsif ($v >= version->parse("5.16.0")) {
-            run "make", "-j8";
-            run "make", "install";
-        } else {
-            run "make", "install";
+        my $guard = pushd $dir;
+        {
+            local *STDOUT = local *STDERR = $self->{logfh};
+            local $ENV{PERL5_PATCHPERL_PLUGIN} = "Darwin::RemoveIncludeGuard";
+            Devel::PatchPerl->patch_source;
         }
+        $self->_system(
+            "sh",
+            "Configure",
+            "-des",
+            "-DDEBUGGING=-g",
+            "-Dprefix=" . catpath($self->{target_dir}, $prefix),
+            "-Dscriptdir=" . catpath($self->{target_dir}, $prefix, "bin"),
+            "-Dman1dir=none",
+            "-Dman3dir=none",
+            @configure,
+        ) or return;
+        $self->_system("make", "install") or return;
+        unlink catpath($self->{target_dir}, $prefix, "bin", "perl$version") or die;
     }
-    chdir ".." or die;
-    rmtree "perl-$version" or die;
-    chdir $VERSIONS or die;
-    unlink "$prefix/bin/perl$version" or die;
-    run "tar", "cJf", "$prefix.tar.xz", $prefix;
-    return 1;
+    $self->_system(
+        "tar", "cJf",
+        catpath($self->{target_dir}, "$prefix.tar.xz"),
+        "-C", $self->{target_dir},
+        $prefix,
+    ) or die;
+    rmtree $dir;
+    1;
 }
 
-sub build_all {
+sub all_perls {
     my $releases = CPAN::Perl::Releases::MetaCPAN->new->get;
     my %perl;
     for my $release (@$releases) {
         my $status = $release->{status};
         next if $status ne "cpan" && $status ne "latest";
         my $name = $release->{name};
-        my ($version, $minor, $patch) = $name =~ /^perl-(5\.(\d+)\.(\d+))$/ or next;
+        my ($version, $major, $minor, $patch)
+            = $name =~ /^perl-(([57])\.(\d+)\.(\d+))$/ or next;
         next if $minor % 2 != 0;
-        push @{$perl{$minor}}, {
-            version => $version,
-            url => $release->{download_url},
-            patch => $patch,
-        };
+        my $major_minor = sprintf "%d.%03d", $major, $minor;
+        my $url = $release->{download_url};
+        $url =~ s/\.(gz|bz2)$/.xz/ if $major_minor >= 5.022;
+        push @{$perl{$major_minor}}, { version => $version, url => $url, patch => $patch };
     }
     my @want;
-    push @want, sort { $a->{patch} <=> $b->{patch} } grep { $_->{patch} != 0 } @{$perl{8}};
-    push @want, sort { $a->{patch} <=> $b->{patch} } @{$perl{10}};
-    for my $minor (grep { $_ > 10 } sort keys %perl) {
-        my ($max) = sort { $b->{patch} <=> $a->{patch} } @{$perl{$minor}};
+    push @want, sort { $a->{patch} <=> $b->{patch} } grep { $_->{patch} != 0 } @{$perl{"5.008"}};
+    push @want, sort { $a->{patch} <=> $b->{patch} } @{$perl{"5.010"}};
+    for my $major_minor (grep { $_ > 5.010 } sort keys %perl) {
+        my ($max) = sort { $b->{patch} <=> $a->{patch} } @{$perl{$major_minor}};
         push @want, $max;
     }
+    @want;
+}
 
-    mkpath "$ROOT/build" unless -d "$ROOT/build";
-    my $logfile = "$ROOT/build/build.log.@{[time]}";
-    warn "Using $logfile\n";
-    for my $want (@want) {
-        my $v = $want->{version};
-        print STDERR "Building $v ...";
-        my ($done1, $took1) = wrap $logfile, sub { build $v };
-        if ($done1) {
-            print STDERR " DONE took $took1 seconds\n";
-        } else {
-            print STDERR " SKIP it\n";
-        }
+sub run_all {
+    my $self = shift;
 
-        print STDERR "Building $v -Duseithreads ...";
-        my ($done2, $took2) = wrap $logfile, sub { build $v, "-Duseithreads" };
-        if ($done2) {
-            print STDERR " DONE took $took2 seconds\n";
-        } else {
-            print STDERR " SKIP it\n";
+    my (@url, @build);
+    for my $perl ($self->all_perls) {
+        my $file0 = catpath $self->{cache_dir}, basename $perl->{url};
+        if (!-f $file0) {
+            push @url, {
+                version => $perl->{version},
+                url => $perl->{url},
+            };
         }
+        my $file1 = catpath $self->{target_dir}, "$perl->{version}.tar.xz";
+        if (!-f $file1) {
+            push @build, {
+                file => $file0,
+                version => $perl->{version},
+                prefix => $perl->{version},
+                configure => [],
+            };
+        }
+        my $file2 = catpath $self->{target_dir}, "$perl->{version}-thr.tar.xz";
+        if (!-f $file2) {
+            push @build, {
+                file => $file0,
+                version => $perl->{version},
+                prefix => "$perl->{version}-thr",
+                configure => ["-Duseithreads"],
+            };
+        }
+    }
+
+    if (@url) {
+        my @result = $self->_parallel(5, \@url, sub {
+            my $url = shift;
+            $self->_log("Fetching $url->{url}");
+            warn "$$ Fetching $url->{url}\n";
+            my (undef, $err) = $self->fetch($url->{url});
+            return { %$url, error => $err };
+        });
+        for my $result (@result) {
+            die "$result->{error}\n" if $result->{error};
+        }
+    }
+    if (!@build) {
+        warn "There is no need to build perls.\n";
+        return;
+    }
+    my @result = $self->_parallel(5, \@build, sub {
+        my $build = shift;
+        warn "$$ \e[1;33mSTART\e[m $build->{prefix}\n";
+        my $start = time;
+        my $ok = $self->build(%$build);
+        my $elapsed = time - $start;
+        warn sprintf "$$ %s %s %d secs\n",
+            $ok ? "\e[1;32mDONE\e[m " : "\e[1;31mFAIL\e[m ", $build->{prefix}, $elapsed;
+        return { %$build, error => $ok ? "" : "failed to build $build->{prefix}" };
+    });
+    for my $result (@result) {
+        die "$result->{error}\n" if $result->{error};
     }
 }
 
-my $HELP = <<"___";
-Usage:
-  $0 5.28.1
-  $0 5.28.1 -Duseithreads
-  $0 5.28.1 -Duseshrplib
-  $0 --all
-___
-
-die $HELP if !@ARGV or $ARGV[0] =~ /^(-h|--help)$/;
-if ($ARGV[0] eq "--all") {
-    build_all;
-} else {
-    build @ARGV;
+sub _parallel {
+    my ($self, $num, $tasks, $sub) = @_;
+    my $pipes = Parallel::Pipes->new($num, $sub);
+    my @result;
+    for my $task (@$tasks) {
+        my @ready = $pipes->is_ready;
+        push @result, $_->read for grep { $_->is_written } @ready;
+        $ready[0]->write($task);
+    }
+    while (my @written = $pipes->is_written) {
+        push @result, $_->read for @written;
+    }
+    $pipes->close;
+    @result;
 }
+
+my $root = $ENV{BUILD_ROOT} || $ENV{PLENV_ROOT} || catpath($ENV{HOME}, ".plenv");
+my $app = __PACKAGE__->new(root => $root);
+warn "Build.log is $app->{logfile}\n";
+$app->run_all;
