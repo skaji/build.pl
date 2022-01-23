@@ -1,0 +1,12 @@
+prereqs:
+  runtime:
+    requires:
+      CPAN::Perl::Releases::MetaCPAN:
+      Devel::PatchPerl:
+      HTTP::Tinyish:
+      Parallel::Pipes:
+      version:
+      Devel::PatchPerl::Plugin::Darwin::RemoveIncludeGuard:
+        git: https://github.com/skaji/Devel-PatchPerl-Plugin-Darwin-RemoveIncludeGuard.git
+      Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro:
+        git: https://github.com/skaji/Devel-PatchPerl-Plugin-FixCompoundTokenSplitByMacro.git

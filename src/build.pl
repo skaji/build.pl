@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use CPAN::Perl::Releases::MetaCPAN;
+use Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro;
 use Devel::PatchPerl;
 use File::Basename qw(basename);
 use File::Path qw(mkpath rmtree);
@@ -84,6 +85,9 @@ sub build {
         my $guard = pushd $dir;
         {
             local *STDOUT = local *STDERR = $self->{logfh};
+            if ($^O =~ /darwin/) {
+                Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro->patchperl(version => $version);
+            }
             local $ENV{PERL5_PATCHPERL_PLUGIN} = "Darwin::RemoveIncludeGuard";
             Devel::PatchPerl->patch_source;
         }

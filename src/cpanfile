@@ -1,8 +1,0 @@
-requires 'CPAN::Perl::Releases::MetaCPAN';
-requires 'Devel::PatchPerl';
-requires 'HTTP::Tinyish';
-requires 'Parallel::Pipes';
-requires 'version';
-
-requires 'Devel::PatchPerl::Plugin::Darwin::RemoveIncludeGuard',
-    git => 'https://github.com/skaji/Devel-PatchPerl-Plugin-Darwin-RemoveIncludeGuard.git';
