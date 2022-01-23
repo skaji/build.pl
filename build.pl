@@ -11928,6 +11928,7 @@ sub new {
         build_dir => $build_dir,
         target_dir => $target_dir,
         context => '',
+        parallel => $argv{parallel} || 5,
     }, $class;
 }
 
@@ -12067,7 +12068,7 @@ sub run_all {
     }
 
     if (@url) {
-        my @result = $self->_parallel(5, \@url, sub {
+        my @result = $self->_parallel($self->{parallel}, \@url, sub {
             my $url = shift;
             $self->_log("Fetching $url->{url}");
             warn "$$ Fetching $url->{url}\n";
@@ -12082,7 +12083,7 @@ sub run_all {
         warn "There is no need to build perls.\n";
         return;
     }
-    my @result = $self->_parallel(5, \@build, sub {
+    my @result = $self->_parallel($self->{parallel}, \@build, sub {
         my $build = shift;
         warn "$$ \e[1;33mSTART\e[m $build->{prefix}\n";
         my $start = time;
@@ -12114,6 +12115,6 @@ sub _parallel {
 }
 
 my $root = $ENV{BUILD_ROOT} || $ENV{PLENV_ROOT} || catpath($ENV{HOME}, ".plenv");
-my $app = __PACKAGE__->new(root => $root);
+my $app = __PACKAGE__->new(root => $root, parallel => 5);
 warn "Build.log is $app->{logfile}\n";
 $app->run_all;
