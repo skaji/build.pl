@@ -11971,7 +11971,7 @@ sub build {
     local $self->{context} = $prefix;
 
     (my $base = basename $file) =~ s/\.tar\.(gz|bz2|xz)$//;
-    my $dir = tempdir "$base-XXXXX", CLEANUP => 0, DIR => $self->{build_dir};
+    my $dir = tempdir "$base-XXXXX", CLEANUP => 0;
     chmod 0755, $dir;
     $self->_system("tar", "xf", $file, "--strip-components=1", "-C", $dir) or die;
 
