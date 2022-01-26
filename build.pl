@@ -11972,8 +11972,11 @@ sub build {
     local $self->{context} = $prefix;
 
     (my $base = basename $file) =~ s/\.tar\.(gz|bz2|xz)$//;
-    my $dir = tempdir "$base-XXXXX", CLEANUP => 0;
-    chmod 0755, $dir;
+    my $tmpdir = File::Spec->tmpdir;
+    if ($^O eq "darwin" && -d "/private/tmp" && -w "/private/tmp") {
+        $tmpdir = "/private/tmp";
+    }
+    my $dir = tempdir "$base-XXXXX", CLEANUP => 0, DIR => $tmpdir;
     $self->_system("tar", "xf", $file, "--strip-components=1", "-C", $dir) or die;
 
     {
@@ -12115,6 +12118,6 @@ sub _parallel {
 }
 
 my $root = $ENV{BUILD_ROOT} || $ENV{PLENV_ROOT} || catpath($ENV{HOME}, ".plenv");
-my $app = __PACKAGE__->new(root => $root, parallel => 5);
+my $app = __PACKAGE__->new(root => $root, parallel => 4);
 warn "Build.log is $app->{logfile}\n";
 $app->run_all;
