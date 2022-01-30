@@ -115,6 +115,10 @@ sub _system {
     my $pid = open my $fh, "-|";
     if ($pid == 0) {
         open STDERR, ">&", \*STDOUT;
+        if (@cmd == 1 and ref $cmd[0] eq "CODE") {
+            $cmd[0]->();
+            exit;
+        }
         exec { $cmd[0] } @cmd;
         exit 255;
     }
@@ -149,8 +153,8 @@ sub build {
 
     {
         my $guard = pushd $dir;
-        {
-            local *STDOUT = local *STDERR = $self->{logfh};
+
+        $self->_system(sub {
             local $ENV{PERL5_PATCHPERL_PLUGIN} = "My";
             Devel::PatchPerl->patch_source;
 
@@ -158,7 +162,7 @@ sub build {
             # execute it separately
             warn "Apply Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro\n";
             Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro->patchperl(version => $version);
-        }
+        });
         $self->_system(
             "sh",
             "Configure",
