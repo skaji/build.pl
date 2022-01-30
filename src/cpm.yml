@@ -10,5 +10,5 @@ prereqs:
         git: https://github.com/skaji/Devel-PatchPerl-Plugin-Darwin-RemoveIncludeGuard.git
       Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro:
         git: https://github.com/skaji/Devel-PatchPerl-Plugin-FixCompoundTokenSplitByMacro.git
-      Devel::PatchPerl::Plugin::getcwd:
-        git: https://github.com/skaji/Devel-PatchPerl-Plugin-getcwd.git
+      Devel::PatchPerl::Plugin::Darwin::getcwd:
+        git: https://github.com/skaji/Devel-PatchPerl-Plugin-Darwin-getcwd.git

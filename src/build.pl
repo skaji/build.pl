@@ -22,8 +22,7 @@ use Parallel::Pipes;
         my ($class, %argv) = @_;
         my @plugin = qw(
             Darwin::RemoveIncludeGuard
-            FixCompoundTokenSplitByMacro
-            getcwd
+            Darwin::getcwd
         );
         for my $klass (map { "Devel::PatchPerl::Plugin::$_" } @plugin) {
             eval "require $klass" or die $@;
@@ -154,6 +153,11 @@ sub build {
             local *STDOUT = local *STDERR = $self->{logfh};
             local $ENV{PERL5_PATCHPERL_PLUGIN} = "My";
             Devel::PatchPerl->patch_source;
+
+            # XXX Because we want to apply FixCompoundTokenSplitByMacro to perl 5.34.0,
+            # execute it separately
+            warn "Apply Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro\n";
+            Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro->patchperl(version => $version);
         }
         $self->_system(
             "sh",

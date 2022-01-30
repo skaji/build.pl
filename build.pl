@@ -11617,6 +11617,10 @@ $fatpacked{"Devel/PatchPerl/Plugin/Darwin/RemoveIncludeGuard/Share.pm"} = '#line
   ___
 DEVEL_PATCHPERL_PLUGIN_DARWIN_REMOVEINCLUDEGUARD_SHARE
 
+$fatpacked{"Devel/PatchPerl/Plugin/Darwin/getcwd.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL_PLUGIN_DARWIN_GETCWD';
+  package Devel::PatchPerl::Plugin::Darwin::getcwd;use strict;use warnings;our$VERSION='0.001';use version;sub patchperl {my ($class,%argv)=@_;if ($^O ne "darwin"){return 1}my$version=version->parse($argv{version});if ($version >= v5.30.0){return 1}my ($file)=grep -f,qw(dist/PathTools/Cwd.pm dist/Cwd/Cwd.pm cpan/Cwd/Cwd.pm lib/Cwd.pm);die "Missing Cwd.pm" if!$file;warn "patching $file\n";my$find=q[my $start = @_ ? shift : '.';];open my$in,"<",$file or die;open my$out,">","$file.tmp" or die;while (my$l=<$in>){print {$out}$l;if ($l =~ /\Q$find\E/){print {$out}q[    if ($start eq ".") { return _backtick_pwd() } # XXX patched by Devel-PatchPerl-Plugin-Darwin-getcwd],"\n"}}close$in;close$out;rename "$file.tmp",$file or die "rename $!";return 1}1;
+DEVEL_PATCHPERL_PLUGIN_DARWIN_GETCWD
+
 $fatpacked{"Devel/PatchPerl/Plugin/FixCompoundTokenSplitByMacro.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL_PLUGIN_FIXCOMPOUNDTOKENSPLITBYMACRO';
   package Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro;use strict;use warnings;our$VERSION='0.001';use Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro::Share;use Devel::PatchPerl;use version ();sub patchperl {my ($class,%argv)=@_;my$version=version->parse($argv{version});my$name;if ($version >= v5.35.2){return 1}elsif ($version >= v5.19.5){$name="v5.19.5-newer.patch"}elsif ($version >= v5.8.9){$name="v5.19.5-older.patch"}elsif ($version >= v5.8.8){$name="v5.8.8-newer.patch"}else {$name="v5.8.8-older.patch"}my$patch=Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro::Share->file($name);Devel::PatchPerl::_patch($patch)}1;
 DEVEL_PATCHPERL_PLUGIN_FIXCOMPOUNDTOKENSPLITBYMACRO
@@ -11681,10 +11685,6 @@ $fatpacked{"Devel/PatchPerl/Plugin/FixCompoundTokenSplitByMacro/Share.pm"} = '#l
   IHsgZFRIWDsgczsgfSBTVE1UX0VORAo=
   ___
 DEVEL_PATCHPERL_PLUGIN_FIXCOMPOUNDTOKENSPLITBYMACRO_SHARE
-
-$fatpacked{"Devel/PatchPerl/Plugin/getcwd.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL_PLUGIN_GETCWD';
-  package Devel::PatchPerl::Plugin::getcwd;use strict;use warnings;our$VERSION='0.001';use version;sub patchperl {my ($class,%argv)=@_;if ($^O ne "darwin"){return 1}my$version=version->parse($argv{version});if ($version >= v5.30.0){return 1}my ($file)=grep -f,qw(dist/PathTools/Cwd.pm dist/Cwd/Cwd.pm cpan/Cwd/Cwd.pm lib/Cwd.pm);die "Missing Cwd.pm" if!$file;warn "patching $file\n";my$find=q[my $start = @_ ? shift : '.';];open my$in,"<",$file or die;open my$out,">","$file.tmp" or die;while (my$l=<$in>){print {$out}$l;if ($l =~ /\Q$find\E/){print {$out}q[    if ($start eq ".") { return _backtick_pwd() } # XXX patched by Devel-PatchPerl-Plugin-getcwd],"\n"}}close$in;close$out;rename "$file.tmp",$file or die "rename $!";return 1}1;
-DEVEL_PATCHPERL_PLUGIN_GETCWD
 
 $fatpacked{"Exporter.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'EXPORTER';
   package Exporter;require 5.006;our$Debug=0;our$ExportLevel=0;our$Verbose ||= 0;our$VERSION='5.74';our (%Cache);sub as_heavy {require Exporter::Heavy;my$c=(caller(1))[3];$c =~ s/.*:://;\&{"Exporter::Heavy::heavy_$c"}}sub export {goto &{as_heavy()}}sub import {my$pkg=shift;my$callpkg=caller($ExportLevel);if ($pkg eq "Exporter" and @_ and $_[0]eq "import"){*{$callpkg."::import"}=\&import;return}my$exports=\@{"$pkg\::EXPORT"};my$fail=${$pkg .'::'}{EXPORT_FAIL}&& \@{"$pkg\::EXPORT_FAIL"};return export$pkg,$callpkg,@_ if$Verbose or $Debug or $fail && @$fail > 1;my$export_cache=($Cache{$pkg}||= {});my$args=@_ or @_=@$exports;if ($args and not %$export_cache){s/^&//,$export_cache->{$_}=1 foreach (@$exports,@{"$pkg\::EXPORT_OK"})}my$heavy;if ($args or $fail){($heavy=(/\W/ or $args and not exists$export_cache->{$_}or $fail and @$fail and $_ eq $fail->[0]))and last foreach (@_)}else {($heavy=/\W/)and last foreach (@_)}return export$pkg,$callpkg,($args ? @_ : ())if$heavy;local$SIG{__WARN__}=sub {require Carp;&Carp::carp}if not $SIG{__WARN__};*{"$callpkg\::$_"}=\&{"$pkg\::$_"}foreach @_}sub export_fail {my$self=shift;@_}sub export_to_level {goto &{as_heavy()}}sub export_tags {goto &{as_heavy()}}sub export_ok_tags {goto &{as_heavy()}}sub require_version {goto &{as_heavy()}}1;
@@ -11920,8 +11920,7 @@ use Parallel::Pipes;
         my ($class, %argv) = @_;
         my @plugin = qw(
             Darwin::RemoveIncludeGuard
-            FixCompoundTokenSplitByMacro
-            getcwd
+            Darwin::getcwd
         );
         for my $klass (map { "Devel::PatchPerl::Plugin::$_" } @plugin) {
             eval "require $klass" or die $@;
@@ -12052,6 +12051,11 @@ sub build {
             local *STDOUT = local *STDERR = $self->{logfh};
             local $ENV{PERL5_PATCHPERL_PLUGIN} = "My";
             Devel::PatchPerl->patch_source;
+
+            # XXX Because we want to apply FixCompoundTokenSplitByMacro to perl 5.34.0,
+            # execute it separately
+            warn "Apply Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro\n";
+            Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro->patchperl(version => $version);
         }
         $self->_system(
             "sh",
