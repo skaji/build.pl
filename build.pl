@@ -11682,6 +11682,10 @@ $fatpacked{"Devel/PatchPerl/Plugin/FixCompoundTokenSplitByMacro/Share.pm"} = '#l
   ___
 DEVEL_PATCHPERL_PLUGIN_FIXCOMPOUNDTOKENSPLITBYMACRO_SHARE
 
+$fatpacked{"Devel/PatchPerl/Plugin/getcwd.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL_PLUGIN_GETCWD';
+  package Devel::PatchPerl::Plugin::getcwd;use strict;use warnings;our$VERSION='0.001';use version;sub patchperl {my ($class,%argv)=@_;if ($^O ne "darwin"){return 1}my$version=version->parse($argv{version});if ($version >= v5.30.0){return 1}my ($file)=grep -f,qw(dist/PathTools/Cwd.pm dist/Cwd/Cwd.pm cpan/Cwd/Cwd.pm lib/Cwd.pm);die "Missing Cwd.pm" if!$file;warn "patching $file\n";my$find=q[my $start = @_ ? shift : '.';];open my$in,"<",$file or die;open my$out,">","$file.tmp" or die;while (my$l=<$in>){print {$out}$l;if ($l =~ /\Q$find\E/){print {$out}q[    if ($start eq ".") { return _backtick_pwd() } # XXX patched by Devel-PatchPerl-Plugin-getcwd],"\n"}}close$in;close$out;rename "$file.tmp",$file or die "rename $!";return 1}1;
+DEVEL_PATCHPERL_PLUGIN_GETCWD
+
 $fatpacked{"Exporter.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'EXPORTER';
   package Exporter;require 5.006;our$Debug=0;our$ExportLevel=0;our$Verbose ||= 0;our$VERSION='5.74';our (%Cache);sub as_heavy {require Exporter::Heavy;my$c=(caller(1))[3];$c =~ s/.*:://;\&{"Exporter::Heavy::heavy_$c"}}sub export {goto &{as_heavy()}}sub import {my$pkg=shift;my$callpkg=caller($ExportLevel);if ($pkg eq "Exporter" and @_ and $_[0]eq "import"){*{$callpkg."::import"}=\&import;return}my$exports=\@{"$pkg\::EXPORT"};my$fail=${$pkg .'::'}{EXPORT_FAIL}&& \@{"$pkg\::EXPORT_FAIL"};return export$pkg,$callpkg,@_ if$Verbose or $Debug or $fail && @$fail > 1;my$export_cache=($Cache{$pkg}||= {});my$args=@_ or @_=@$exports;if ($args and not %$export_cache){s/^&//,$export_cache->{$_}=1 foreach (@$exports,@{"$pkg\::EXPORT_OK"})}my$heavy;if ($args or $fail){($heavy=(/\W/ or $args and not exists$export_cache->{$_}or $fail and @$fail and $_ eq $fail->[0]))and last foreach (@_)}else {($heavy=/\W/)and last foreach (@_)}return export$pkg,$callpkg,($args ? @_ : ())if$heavy;local$SIG{__WARN__}=sub {require Carp;&Carp::carp}if not $SIG{__WARN__};*{"$callpkg\::$_"}=\&{"$pkg\::$_"}foreach @_}sub export_fail {my$self=shift;@_}sub export_to_level {goto &{as_heavy()}}sub export_tags {goto &{as_heavy()}}sub export_ok_tags {goto &{as_heavy()}}sub require_version {goto &{as_heavy()}}1;
 EXPORTER
@@ -11909,6 +11913,70 @@ use IO::Handle;
 use POSIX qw(strftime);
 use Parallel::Pipes;
 
+{
+    package Devel::PatchPerl::Plugin::Multi;
+    $INC{"Devel/PatchPerl/Plugin/Multi.pm"} = $0;
+    sub patchperl {
+        my ($class, %argv) = @_;
+        return if !$ENV{PERL5_PATCHPERL_PLUGINS};
+        my @plugin = split /,/, $ENV{PERL5_PATCHPERL_PLUGINS};
+        for my $klass (map { "Devel::PatchPerl::Plugin::$_" } @plugin) {
+            eval "require $klass" or die $@;
+            warn "Apply $klass\n";
+            $klass->patchperl(%argv);
+        }
+    }
+}
+
+{
+    package Releases;
+    sub new {
+        my $class = shift;
+        my @release;
+        for my $release (@{ CPAN::Perl::Releases::MetaCPAN->new->get }) {
+            my $status = $release->{status};
+            next if $status ne "cpan" && $status ne "latest";
+            my $name = $release->{name};
+            my ($version, $major, $minor, $patch)
+                = $name =~ /^perl-(([57])\.(\d+)\.(\d+))$/ or next;
+            next if $minor % 2 != 0;
+            my $major_minor = sprintf "%d.%03d", $major, $minor;
+            my $url = $release->{download_url};
+            $url =~ s/\.(gz|bz2)$/.xz/ if $major_minor >= 5.022;
+            push @release, {
+                version => $version,
+                major => $major,
+                minor => $minor,
+                patch => $patch,
+                url => $url,
+            };
+        }
+        bless \@release, $class;
+    }
+    sub find {
+        my ($self, $version) = @_;
+        my ($found) = grep { $_->{version} eq $version } @$self;
+        $found;
+    }
+    sub stables {
+        my $self = shift;
+        my %perl;
+        for my $r (@$self) {
+            my $major_minor = sprintf "%d.%03d", $r->{major}, $r->{minor};
+            push @{$perl{$major_minor}}, $r;
+        }
+        my @want;
+        push @want, sort { $a->{patch} <=> $b->{patch} } grep { $_->{patch} != 0 } @{$perl{"5.008"}};
+        push @want, sort { $a->{patch} <=> $b->{patch} } @{$perl{"5.010"}};
+        for my $major_minor (grep { $_ > 5.010 } sort keys %perl) {
+            my ($max) = sort { $b->{patch} <=> $a->{patch} } @{$perl{$major_minor}};
+            push @want, $max;
+        }
+        @want;
+    }
+}
+
+
 sub catpath { File::Spec->catfile(@_) }
 
 sub new {
@@ -11972,21 +12040,15 @@ sub build {
     local $self->{context} = $prefix;
 
     (my $base = basename $file) =~ s/\.tar\.(gz|bz2|xz)$//;
-    my $tmpdir = File::Spec->tmpdir;
-    if ($^O eq "darwin" && -d "/private/tmp" && -w "/private/tmp") {
-        $tmpdir = "/private/tmp";
-    }
-    my $dir = tempdir "$base-XXXXX", CLEANUP => 0, DIR => $tmpdir;
+    my $dir = tempdir "$base-XXXXX", CLEANUP => 0, DIR => $self->{build_dir};
     $self->_system("tar", "xf", $file, "--strip-components=1", "-C", $dir) or die;
 
     {
         my $guard = pushd $dir;
         {
             local *STDOUT = local *STDERR = $self->{logfh};
-            if ($^O =~ /darwin/) {
-                Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro->patchperl(version => $version);
-            }
-            local $ENV{PERL5_PATCHPERL_PLUGIN} = "Darwin::RemoveIncludeGuard";
+            local $ENV{PERL5_PATCHPERL_PLUGIN} = "Multi";
+            local $ENV{PERL5_PATCHPERL_PLUGINS} = "Darwin::RemoveIncludeGuard,FixCompoundTokenSplitByMacro,getcwd";
             Devel::PatchPerl->patch_source;
         }
         $self->_system(
@@ -12013,36 +12075,22 @@ sub build {
     1;
 }
 
-sub all_perls {
-    my $releases = CPAN::Perl::Releases::MetaCPAN->new->get;
-    my %perl;
-    for my $release (@$releases) {
-        my $status = $release->{status};
-        next if $status ne "cpan" && $status ne "latest";
-        my $name = $release->{name};
-        my ($version, $major, $minor, $patch)
-            = $name =~ /^perl-(([57])\.(\d+)\.(\d+))$/ or next;
-        next if $minor % 2 != 0;
-        my $major_minor = sprintf "%d.%03d", $major, $minor;
-        my $url = $release->{download_url};
-        $url =~ s/\.(gz|bz2)$/.xz/ if $major_minor >= 5.022;
-        push @{$perl{$major_minor}}, { version => $version, url => $url, patch => $patch };
-    }
-    my @want;
-    push @want, sort { $a->{patch} <=> $b->{patch} } grep { $_->{patch} != 0 } @{$perl{"5.008"}};
-    push @want, sort { $a->{patch} <=> $b->{patch} } @{$perl{"5.010"}};
-    for my $major_minor (grep { $_ > 5.010 } sort keys %perl) {
-        my ($max) = sort { $b->{patch} <=> $a->{patch} } @{$perl{$major_minor}};
-        push @want, $max;
-    }
-    @want;
-}
+sub run {
+    my ($self, @version) = @_;
 
-sub run_all {
-    my $self = shift;
+    my $releases = Releases->new;
+    my @perl;
+    if (@version) {
+        for my $v (@version) {
+            my $found = $releases->find($v) or die "Invalid version $v\n";
+            push @perl, $found;
+        }
+    } else {
+        @perl = $releases->stables;
+    }
 
     my (@url, @build);
-    for my $perl ($self->all_perls) {
+    for my $perl (@perl) {
         my $file0 = catpath $self->{cache_dir}, basename $perl->{url};
         if (!-f $file0) {
             push @url, {
@@ -12117,7 +12165,17 @@ sub _parallel {
     @result;
 }
 
-my $root = $ENV{BUILD_ROOT} || $ENV{PLENV_ROOT} || catpath($ENV{HOME}, ".plenv");
+if (@ARGV and $ARGV[0] =~ /^(-h|--help)$/) {
+    die <<'EOF';
+Usage: build.pl [versions]
+
+Examples:
+  build.pl
+  build.pl 5.34.0
+EOF
+}
+
+my $root = $ENV{PLENV_ROOT} || catpath($ENV{HOME}, ".plenv");
 my $app = __PACKAGE__->new(root => $root, parallel => 4);
 warn "Build.log is $app->{logfile}\n";
-$app->run_all;
+$app->run(@ARGV);
