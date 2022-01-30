@@ -1,6 +1,6 @@
 # build perls for plenv
 
-This script builds perls for plenv. The one command `build.pl --all` builds:
+This script builds perls for plenv. The one command `build.pl` builds:
 
 * 5.8.1, 5.8.2, 5.8.3, 5.8.4, 5.8.5, 5.8.6, 5.8.7, 5.8.8, 5.8.9
 * 5.10.0, 5.10.1
@@ -33,7 +33,7 @@ $ mv build.pl /path/to/bin/
 ## Example
 
 ```
-$ build.pl --all
+$ build.pl
 (Be patient; this will take more than 1 hour...)
 
 $ plenv versions
@@ -82,10 +82,10 @@ $ plenv versions
 
 ## Upgrade perls
 
-If a new stable perl is released, you may just execute `build.pl --all` again:
+If a new stable perl is released, you may just execute `build.pl` again:
 
 ```
-$ build.pl --all
+$ build.pl
 Using /Users/skaji/env/plenv/build/build.log.1555227667
 Building 5.8.1 ... SKIP it
 Building 5.8.1 -Duseithreads ... SKIP it

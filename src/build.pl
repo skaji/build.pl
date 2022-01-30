@@ -16,12 +16,15 @@ use POSIX qw(strftime);
 use Parallel::Pipes;
 
 {
-    package Devel::PatchPerl::Plugin::Multi;
-    $INC{"Devel/PatchPerl/Plugin/Multi.pm"} = $0;
+    package Devel::PatchPerl::Plugin::My;
+    $INC{"Devel/PatchPerl/Plugin/My.pm"} = $0;
     sub patchperl {
         my ($class, %argv) = @_;
-        return if !$ENV{PERL5_PATCHPERL_PLUGINS};
-        my @plugin = split /,/, $ENV{PERL5_PATCHPERL_PLUGINS};
+        my @plugin = qw(
+            Darwin::RemoveIncludeGuard
+            FixCompoundTokenSplitByMacro
+            getcwd
+        );
         for my $klass (map { "Devel::PatchPerl::Plugin::$_" } @plugin) {
             eval "require $klass" or die $@;
             warn "Apply $klass\n";
@@ -149,8 +152,7 @@ sub build {
         my $guard = pushd $dir;
         {
             local *STDOUT = local *STDERR = $self->{logfh};
-            local $ENV{PERL5_PATCHPERL_PLUGIN} = "Multi";
-            local $ENV{PERL5_PATCHPERL_PLUGINS} = "Darwin::RemoveIncludeGuard,FixCompoundTokenSplitByMacro,getcwd";
+            local $ENV{PERL5_PATCHPERL_PLUGIN} = "My";
             Devel::PatchPerl->patch_source;
         }
         $self->_system(
