@@ -162,7 +162,7 @@ sub build {
             # execute it separately
             warn "Apply Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro\n";
             Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro->patchperl(version => $version);
-        });
+        }) or return;
         $self->_system(
             "sh",
             "Configure",
@@ -282,8 +282,8 @@ if (@ARGV and $ARGV[0] =~ /^(-h|--help)$/) {
 Usage: build.pl [versions]
 
 Examples:
-  build.pl
-  build.pl 5.34.0
+ $ build.pl
+ $ build.pl 5.34.0
 EOF
 }
 

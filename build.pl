@@ -11622,35 +11622,26 @@ $fatpacked{"Devel/PatchPerl/Plugin/Darwin/getcwd.pm"} = '#line '.(1+__LINE__).' 
 DEVEL_PATCHPERL_PLUGIN_DARWIN_GETCWD
 
 $fatpacked{"Devel/PatchPerl/Plugin/FixCompoundTokenSplitByMacro.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL_PLUGIN_FIXCOMPOUNDTOKENSPLITBYMACRO';
-  package Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro;use strict;use warnings;our$VERSION='0.001';use Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro::Share;use Devel::PatchPerl;use version ();sub patchperl {my ($class,%argv)=@_;my$version=version->parse($argv{version});my$name;if ($version >= v5.35.2){return 1}elsif ($version >= v5.19.5){$name="v5.19.5-newer.patch"}elsif ($version >= v5.8.9){$name="v5.19.5-older.patch"}elsif ($version >= v5.8.8){$name="v5.8.8-newer.patch"}else {$name="v5.8.8-older.patch"}my$patch=Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro::Share->file($name);Devel::PatchPerl::_patch($patch)}1;
+  package Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro;use strict;use warnings;our$VERSION='0.001';use Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro::Share;use Devel::PatchPerl;use version ();sub patchperl {my ($class,%argv)=@_;my$version=version->parse($argv{version});my$name;if ($version >= v5.35.2){return 1}elsif ($version >= v5.19.5){$name="5.patch"}elsif ($version >= v5.19.4){$name="4.patch"}elsif ($version >= v5.9.4 || $version==v5.8.9){$name="3.patch"}elsif ($version==v5.9.3 || $version==v5.8.8){$name="2.patch"}elsif ($version >= v5.8.1){$name="1.patch"}else {return 1}my$patch=Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro::Share->file($name);Devel::PatchPerl::_patch($patch)}1;
 DEVEL_PATCHPERL_PLUGIN_FIXCOMPOUNDTOKENSPLITBYMACRO
 
 $fatpacked{"Devel/PatchPerl/Plugin/FixCompoundTokenSplitByMacro/Share.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL_PLUGIN_FIXCOMPOUNDTOKENSPLITBYMACRO_SHARE';
-  package Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro::Share;use strict;use warnings;use MIME::Base64 ();my%file;sub file {my$class=shift;@_ ? $file{$_[0]}: \%file}$file{"v5.19.5-newer.patch"}=MIME::Base64::decode_base64(<<'___');$file{"v5.19.5-older.patch"}=MIME::Base64::decode_base64(<<'___');$file{"v5.8.8-newer.patch"}=MIME::Base64::decode_base64(<<'___');$file{"v5.8.8-older.patch"}=MIME::Base64::decode_base64(<<'___');1;
-  ZGlmZiAtLWdpdCBwZXJsLmggcGVybC5oCmluZGV4IDE3YTIxYTEuLmJkNTc1ZmUgMTAwNjQ0Ci0t
-  LSBwZXJsLmgKKysrIHBlcmwuaApAQCAtNzMzLDEzICs3MzMsOCBAQCBFeGFtcGxlIHVzYWdlOgog
-  IFRyeWluZyB0byBzZWxlY3QgYSB2ZXJzaW9uIHRoYXQgZ2l2ZXMgbm8gd2FybmluZ3MuLi4KICov
-  CiAjaWYgIShkZWZpbmVkKFNUTVRfU1RBUlQpICYmIGRlZmluZWQoU1RNVF9FTkQpKQotIyBpZmRl
-  ZiBQRVJMX1VTRV9HQ0NfQlJBQ0VfR1JPVVBTCi0jICAgZGVmaW5lIFNUTVRfU1RBUlQJKHZvaWQp
-  KAkvKiBnY2Mgc3VwcG9ydHMgIih7IFNUQVRFTUVOVFM7IH0pIiAqLwotIyAgIGRlZmluZSBTVE1U
-  X0VORAkpCi0jIGVsc2UKICMgICBkZWZpbmUgU1RNVF9TVEFSVAlkbwogIyAgIGRlZmluZSBTVE1U
-  X0VORAl3aGlsZSAoMCkKLSMgZW5kaWYKICNlbmRpZgogCiAjaWZuZGVmIEJZVEVPUkRFUiAgLyog
-  U2hvdWxkIG5ldmVyIGhhcHBlbiAtLSBieXRlb3JkZXIgaXMgaW4gY29uZmlnLmggKi8K
-  ___
-  ZGlmZiAtLWdpdCBwZXJsLmggcGVybC5oCmluZGV4IDg5ZjRjOTg5MDQuLmFhOGM2ZWJkMGUgMTAw
-  NjQ0Ci0tLSBwZXJsLmgKKysrIHBlcmwuaApAQCAtNDczLDE5ICs0NzMsOCBAQCBzdHJ1Y3Qgb3Ag
-  KlBlcmxfb3AgYXNtKHN0cmluZ2lmeShPUF9JTl9SRUdJU1RFUikpOwogICogVHJ5aW5nIHRvIHNl
-  bGVjdCBhIHZlcnNpb24gdGhhdCBnaXZlcyBubyB3YXJuaW5ncy4uLgogICovCiAjaWYgIShkZWZp
-  bmVkKFNUTVRfU1RBUlQpICYmIGRlZmluZWQoU1RNVF9FTkQpKQotIyBpZmRlZiBQRVJMX1VTRV9H
-  Q0NfQlJBQ0VfR1JPVVBTCi0jICAgZGVmaW5lIFNUTVRfU1RBUlQJKHZvaWQpKAkvKiBnY2Mgc3Vw
-  cG9ydHMgIih7IFNUQVRFTUVOVFM7IH0pIiAqLwotIyAgIGRlZmluZSBTVE1UX0VORAkpCi0jIGVs
-  c2UKLSAgIC8qIE5vdyB3aGljaCBvdGhlciBkZWZpbmVkKClzIGRvIHdlIG5lZWQgaGVyZSA/Pz8g
-  Ki8KLSMgIGlmIChWT0lERkxBR1MpICYmIChkZWZpbmVkKHN1bikgfHwgZGVmaW5lZChfX3N1bl9f
-  KSkgJiYgIWRlZmluZWQoX19HTlVDX18pCi0jICAgZGVmaW5lIFNUTVRfU1RBUlQJaWYgKDEpCi0j
-  ICAgZGVmaW5lIFNUTVRfRU5ECWVsc2UgKHZvaWQpMAotIyAgZWxzZQogIyAgIGRlZmluZSBTVE1U
-  X1NUQVJUCWRvCiAjICAgZGVmaW5lIFNUTVRfRU5ECXdoaWxlICgwKQotIyAgZW5kaWYKLSMgZW5k
-  aWYKICNlbmRpZgogCiAjaWZuZGVmIEJZVEVPUkRFUiAgLyogU2hvdWxkIG5ldmVyIGhhcHBlbiAt
-  LSBieXRlb3JkZXIgaXMgaW4gY29uZmlnLmggKi8K
+  package Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro::Share;use strict;use warnings;use MIME::Base64 ();my%file;sub file {my$class=shift;@_ ? $file{$_[0]}: \%file}$file{"1.patch"}=MIME::Base64::decode_base64(<<'___');$file{"2.patch"}=MIME::Base64::decode_base64(<<'___');$file{"3.patch"}=MIME::Base64::decode_base64(<<'___');$file{"4.patch"}=MIME::Base64::decode_base64(<<'___');$file{"5.patch"}=MIME::Base64::decode_base64(<<'___');1;
+  ZGlmZiAtLWdpdCBwZXJsLmggcGVybC5oCmluZGV4IDk3YjA2Nzg3MzcuLmUwMjE1MGU1ZjEgMTAw
+  NjQ0Ci0tLSBwZXJsLmgKKysrIHBlcmwuaApAQCAtMjM3LDE5ICsyMzcsOCBAQCByZWdpc3RlciBz
+  dHJ1Y3Qgb3AgKlBlcmxfb3AgYXNtKHN0cmluZ2lmeShPUF9JTl9SRUdJU1RFUikpOwogICogVHJ5
+  aW5nIHRvIHNlbGVjdCBhIHZlcnNpb24gdGhhdCBnaXZlcyBubyB3YXJuaW5ncy4uLgogICovCiAj
+  aWYgIShkZWZpbmVkKFNUTVRfU1RBUlQpICYmIGRlZmluZWQoU1RNVF9FTkQpKQotIyBpZiBkZWZp
+  bmVkKF9fR05VQ19fKSAmJiAhZGVmaW5lZChQRVJMX0dDQ19CUkFDRV9HUk9VUFNfRk9SQklEREVO
+  KSAmJiAhZGVmaW5lZChfX2NwbHVzcGx1cykKLSMgICBkZWZpbmUgU1RNVF9TVEFSVAkodm9pZCko
+  CS8qIGdjYyBzdXBwb3J0cyBgYCh7IFNUQVRFTUVOVFM7IH0pJycgKi8KLSMgICBkZWZpbmUgU1RN
+  VF9FTkQJKQotIyBlbHNlCi0gICAvKiBOb3cgd2hpY2ggb3RoZXIgZGVmaW5lZCgpcyBkbyB3ZSBu
+  ZWVkIGhlcmUgPz8/ICovCi0jICBpZiAoVk9JREZMQUdTKSAmJiAoZGVmaW5lZChzdW4pIHx8IGRl
+  ZmluZWQoX19zdW5fXykpICYmICFkZWZpbmVkKF9fR05VQ19fKQotIyAgIGRlZmluZSBTVE1UX1NU
+  QVJUCWlmICgxKQotIyAgIGRlZmluZSBTVE1UX0VORAllbHNlICh2b2lkKTAKLSMgIGVsc2UKICMg
+  ICBkZWZpbmUgU1RNVF9TVEFSVAlkbwogIyAgIGRlZmluZSBTVE1UX0VORAl3aGlsZSAoMCkKLSMg
+  IGVuZGlmCi0jIGVuZGlmCiAjZW5kaWYKIAogI2RlZmluZSBXSVRIX1RIWChzKSBTVE1UX1NUQVJU
+  IHsgZFRIWDsgczsgfSBTVE1UX0VORAo=
   ___
   ZGlmZiAtLWdpdCBwZXJsLmggcGVybC5oCmluZGV4IDNjODkzNjJiNTYuLjIwNjU0OGQ5NjYgMTAw
   NjQ0Ci0tLSBwZXJsLmgKKysrIHBlcmwuaApAQCAtMjc3LDE5ICsyNzcsOCBAQCByZWdpc3RlciBz
@@ -11668,21 +11659,45 @@ $fatpacked{"Devel/PatchPerl/Plugin/FixCompoundTokenSplitByMacro/Share.pm"} = '#l
   bmRpZgotIyBlbmRpZgogI2VuZGlmCiAKICNkZWZpbmUgV0lUSF9USFgocykgU1RNVF9TVEFSVCB7
   IGRUSFg7IHM7IH0gU1RNVF9FTkQK
   ___
-  ZGlmZiAtLWdpdCBwZXJsLmggcGVybC5oCmluZGV4IDk3YjA2Nzg3MzcuLmUwMjE1MGU1ZjEgMTAw
-  NjQ0Ci0tLSBwZXJsLmgKKysrIHBlcmwuaApAQCAtMjM3LDE5ICsyMzcsOCBAQCByZWdpc3RlciBz
-  dHJ1Y3Qgb3AgKlBlcmxfb3AgYXNtKHN0cmluZ2lmeShPUF9JTl9SRUdJU1RFUikpOwogICogVHJ5
-  aW5nIHRvIHNlbGVjdCBhIHZlcnNpb24gdGhhdCBnaXZlcyBubyB3YXJuaW5ncy4uLgogICovCiAj
-  aWYgIShkZWZpbmVkKFNUTVRfU1RBUlQpICYmIGRlZmluZWQoU1RNVF9FTkQpKQotIyBpZiBkZWZp
-  bmVkKF9fR05VQ19fKSAmJiAhZGVmaW5lZChQRVJMX0dDQ19CUkFDRV9HUk9VUFNfRk9SQklEREVO
-  KSAmJiAhZGVmaW5lZChfX2NwbHVzcGx1cykKLSMgICBkZWZpbmUgU1RNVF9TVEFSVAkodm9pZCko
-  CS8qIGdjYyBzdXBwb3J0cyBgYCh7IFNUQVRFTUVOVFM7IH0pJycgKi8KLSMgICBkZWZpbmUgU1RN
-  VF9FTkQJKQotIyBlbHNlCi0gICAvKiBOb3cgd2hpY2ggb3RoZXIgZGVmaW5lZCgpcyBkbyB3ZSBu
-  ZWVkIGhlcmUgPz8/ICovCi0jICBpZiAoVk9JREZMQUdTKSAmJiAoZGVmaW5lZChzdW4pIHx8IGRl
-  ZmluZWQoX19zdW5fXykpICYmICFkZWZpbmVkKF9fR05VQ19fKQotIyAgIGRlZmluZSBTVE1UX1NU
-  QVJUCWlmICgxKQotIyAgIGRlZmluZSBTVE1UX0VORAllbHNlICh2b2lkKTAKLSMgIGVsc2UKICMg
-  ICBkZWZpbmUgU1RNVF9TVEFSVAlkbwogIyAgIGRlZmluZSBTVE1UX0VORAl3aGlsZSAoMCkKLSMg
-  IGVuZGlmCi0jIGVuZGlmCiAjZW5kaWYKIAogI2RlZmluZSBXSVRIX1RIWChzKSBTVE1UX1NUQVJU
-  IHsgZFRIWDsgczsgfSBTVE1UX0VORAo=
+  ZGlmZiAtLWdpdCBwZXJsLmggcGVybC5oCmluZGV4IDg5ZjRjOTg5MDQuLmFhOGM2ZWJkMGUgMTAw
+  NjQ0Ci0tLSBwZXJsLmgKKysrIHBlcmwuaApAQCAtNDczLDE5ICs0NzMsOCBAQCBzdHJ1Y3Qgb3Ag
+  KlBlcmxfb3AgYXNtKHN0cmluZ2lmeShPUF9JTl9SRUdJU1RFUikpOwogICogVHJ5aW5nIHRvIHNl
+  bGVjdCBhIHZlcnNpb24gdGhhdCBnaXZlcyBubyB3YXJuaW5ncy4uLgogICovCiAjaWYgIShkZWZp
+  bmVkKFNUTVRfU1RBUlQpICYmIGRlZmluZWQoU1RNVF9FTkQpKQotIyBpZmRlZiBQRVJMX1VTRV9H
+  Q0NfQlJBQ0VfR1JPVVBTCi0jICAgZGVmaW5lIFNUTVRfU1RBUlQJKHZvaWQpKAkvKiBnY2Mgc3Vw
+  cG9ydHMgIih7IFNUQVRFTUVOVFM7IH0pIiAqLwotIyAgIGRlZmluZSBTVE1UX0VORAkpCi0jIGVs
+  c2UKLSAgIC8qIE5vdyB3aGljaCBvdGhlciBkZWZpbmVkKClzIGRvIHdlIG5lZWQgaGVyZSA/Pz8g
+  Ki8KLSMgIGlmIChWT0lERkxBR1MpICYmIChkZWZpbmVkKHN1bikgfHwgZGVmaW5lZChfX3N1bl9f
+  KSkgJiYgIWRlZmluZWQoX19HTlVDX18pCi0jICAgZGVmaW5lIFNUTVRfU1RBUlQJaWYgKDEpCi0j
+  ICAgZGVmaW5lIFNUTVRfRU5ECWVsc2UgKHZvaWQpMAotIyAgZWxzZQogIyAgIGRlZmluZSBTVE1U
+  X1NUQVJUCWRvCiAjICAgZGVmaW5lIFNUTVRfRU5ECXdoaWxlICgwKQotIyAgZW5kaWYKLSMgZW5k
+  aWYKICNlbmRpZgogCiAjaWZuZGVmIEJZVEVPUkRFUiAgLyogU2hvdWxkIG5ldmVyIGhhcHBlbiAt
+  LSBieXRlb3JkZXIgaXMgaW4gY29uZmlnLmggKi8KCg==
+  ___
+  ZGlmZiAtLWdpdCBwZXJsLmggcGVybC5oCmluZGV4IDFlOGU4NzAuLjJmNDI0OWIgMTAwNjQ0Ci0t
+  LSBwZXJsLmgKKysrIHBlcmwuaApAQCAtNDY5LDE5ICs0NjksOCBAQCBzdHJ1Y3Qgb3AgKlBlcmxf
+  b3AgYXNtKHN0cmluZ2lmeShPUF9JTl9SRUdJU1RFUikpOwogICogVHJ5aW5nIHRvIHNlbGVjdCBh
+  IHZlcnNpb24gdGhhdCBnaXZlcyBubyB3YXJuaW5ncy4uLgogICovCiAjaWYgIShkZWZpbmVkKFNU
+  TVRfU1RBUlQpICYmIGRlZmluZWQoU1RNVF9FTkQpKQotIyBpZmRlZiBQRVJMX1VTRV9HQ0NfQlJB
+  Q0VfR1JPVVBTCi0jICAgZGVmaW5lIFNUTVRfU1RBUlQJKHZvaWQpKAkvKiBnY2Mgc3VwcG9ydHMg
+  Iih7IFNUQVRFTUVOVFM7IH0pIiAqLwotIyAgIGRlZmluZSBTVE1UX0VORAkpCi0jIGVsc2UKLSAg
+  IC8qIE5vdyB3aGljaCBvdGhlciBkZWZpbmVkKClzIGRvIHdlIG5lZWQgaGVyZSA/Pz8gKi8KLSMg
+  IGlmIChkZWZpbmVkKHN1bikgfHwgZGVmaW5lZChfX3N1bl9fKSkgJiYgIWRlZmluZWQoX19HTlVD
+  X18pCi0jICAgZGVmaW5lIFNUTVRfU1RBUlQJaWYgKDEpCi0jICAgZGVmaW5lIFNUTVRfRU5ECWVs
+  c2UgKHZvaWQpMAotIyAgZWxzZQogIyAgIGRlZmluZSBTVE1UX1NUQVJUCWRvCiAjICAgZGVmaW5l
+  IFNUTVRfRU5ECXdoaWxlICgwKQotIyAgZW5kaWYKLSMgZW5kaWYKICNlbmRpZgogCiAjaWZuZGVm
+  IEJZVEVPUkRFUiAgLyogU2hvdWxkIG5ldmVyIGhhcHBlbiAtLSBieXRlb3JkZXIgaXMgaW4gY29u
+  ZmlnLmggKi8K
+  ___
+  ZGlmZiAtLWdpdCBwZXJsLmggcGVybC5oCmluZGV4IDE3YTIxYTEuLmJkNTc1ZmUgMTAwNjQ0Ci0t
+  LSBwZXJsLmgKKysrIHBlcmwuaApAQCAtNzMzLDEzICs3MzMsOCBAQCBFeGFtcGxlIHVzYWdlOgog
+  IFRyeWluZyB0byBzZWxlY3QgYSB2ZXJzaW9uIHRoYXQgZ2l2ZXMgbm8gd2FybmluZ3MuLi4KICov
+  CiAjaWYgIShkZWZpbmVkKFNUTVRfU1RBUlQpICYmIGRlZmluZWQoU1RNVF9FTkQpKQotIyBpZmRl
+  ZiBQRVJMX1VTRV9HQ0NfQlJBQ0VfR1JPVVBTCi0jICAgZGVmaW5lIFNUTVRfU1RBUlQJKHZvaWQp
+  KAkvKiBnY2Mgc3VwcG9ydHMgIih7IFNUQVRFTUVOVFM7IH0pIiAqLwotIyAgIGRlZmluZSBTVE1U
+  X0VORAkpCi0jIGVsc2UKICMgICBkZWZpbmUgU1RNVF9TVEFSVAlkbwogIyAgIGRlZmluZSBTVE1U
+  X0VORAl3aGlsZSAoMCkKLSMgZW5kaWYKICNlbmRpZgogCiAjaWZuZGVmIEJZVEVPUkRFUiAgLyog
+  U2hvdWxkIG5ldmVyIGhhcHBlbiAtLSBieXRlb3JkZXIgaXMgaW4gY29uZmlnLmggKi8K
   ___
 DEVEL_PATCHPERL_PLUGIN_FIXCOMPOUNDTOKENSPLITBYMACRO_SHARE
 
@@ -12060,7 +12075,7 @@ sub build {
             # execute it separately
             warn "Apply Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro\n";
             Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro->patchperl(version => $version);
-        });
+        }) or return;
         $self->_system(
             "sh",
             "Configure",
@@ -12180,8 +12195,8 @@ if (@ARGV and $ARGV[0] =~ /^(-h|--help)$/) {
 Usage: build.pl [versions]
 
 Examples:
-  build.pl
-  build.pl 5.34.0
+ $ build.pl
+ $ build.pl 5.34.0
 EOF
 }
 
