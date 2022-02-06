@@ -25,7 +25,7 @@ with 2 flavors:
 You can download a *self-contained* script:
 
 ```
-$ curl -fsSL https://raw.githubusercontent.com/skaji/build.pl/master/build.pl > build.pl
+$ curl -fsSL https://raw.githubusercontent.com/skaji/build.pl/main/build.pl > build.pl
 $ chmod +x build.pl
 $ mv build.pl /path/to/bin/
 ```
@@ -34,6 +34,12 @@ $ mv build.pl /path/to/bin/
 
 ```
 $ build.pl
+Build.log is /Users/skaji/env/plenv/build/1644131275.log
+35586 START 5.8.1
+35587 START 5.8.1-thr
+35588 START 5.8.2
+35589 START 5.8.2-thr
+...
 (Be patient; this will take more than 1 hour...)
 
 $ plenv versions
@@ -86,11 +92,10 @@ If a new stable perl is released, you may just execute `build.pl` again:
 
 ```
 $ build.pl
-Using /Users/skaji/env/plenv/build/build.log.1555227667
-Building 5.8.1 ... SKIP it
-Building 5.8.1 -Duseithreads ... SKIP it
+Build.log is /Users/skaji/env/plenv/build/1644131275.log
+35586 START 5.32.1
+35587 START 5.32.1-thr
 ...
-Building 5.28.2 ...
 ```
 
 ## License

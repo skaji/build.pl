@@ -244,6 +244,7 @@ sub run {
     }
     if (!@build) {
         warn "There is no need to build perls.\n";
+        unlink $self->{logfile};
         return;
     }
     my @result = $self->_parallel($self->{parallel}, \@build, sub {
