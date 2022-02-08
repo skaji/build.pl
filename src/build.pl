@@ -49,6 +49,7 @@ use Parallel::Pipes;
             $url =~ s/\.(gz|bz2)$/.xz/ if $major_minor >= 5.022;
             push @release, {
                 version => $version,
+                major_minor => $major_minor,
                 major => $major,
                 minor => $minor,
                 patch => $patch,
@@ -64,19 +65,18 @@ use Parallel::Pipes;
     }
     sub stables {
         my $self = shift;
-        my %perl;
+        my %group;
         for my $r (@$self) {
-            my $major_minor = sprintf "%d.%03d", $r->{major}, $r->{minor};
-            push @{$perl{$major_minor}}, $r;
+            push @{$group{$r->{major_minor}}}, $r;
         }
-        my @want;
-        push @want, sort { $a->{patch} <=> $b->{patch} } grep { $_->{patch} != 0 } @{$perl{"5.008"}};
-        push @want, sort { $a->{patch} <=> $b->{patch} } @{$perl{"5.010"}};
-        for my $major_minor (grep { $_ > 5.010 } sort keys %perl) {
-            my ($max) = sort { $b->{patch} <=> $a->{patch} } @{$perl{$major_minor}};
-            push @want, $max;
+        for my $major_minor (keys %group) {
+            $group{$major_minor} = [ sort { $a->{patch} <=> $b->{patch} } @{$group{$major_minor}} ];
         }
-        @want;
+        (
+            ( grep { $_->{patch} != 0 } @{$group{"5.008"}} ),
+            ( @{$group{"5.010"}} ),
+            ( map { $group{$_}[-1] } grep { $_ > 5.010 } sort keys %group ),
+        );
     }
 }
 
@@ -140,16 +140,16 @@ sub fetch {
 sub build {
     my ($self, %argv) = @_;
 
-    my $file = $argv{file};
+    my $source = $argv{source};
     my $prefix = $argv{prefix};
     my $version = $argv{version};
     my @configure = @{$argv{configure}};
 
     local $self->{context} = $prefix;
 
-    (my $base = basename $file) =~ s/\.tar\.(gz|bz2|xz)$//;
+    (my $base = basename $source) =~ s/\.tar\.(gz|bz2|xz)$//;
     my $dir = tempdir "$base-XXXXX", CLEANUP => 0, DIR => $self->{build_dir};
-    $self->_system("tar", "xf", $file, "--strip-components=1", "-C", $dir) or die;
+    $self->_system("tar", "xf", $source, "--strip-components=1", "-C", $dir) or die;
 
     {
         my $guard = pushd $dir;
@@ -203,26 +203,26 @@ sub run {
 
     my (@url, @build);
     for my $perl (@perl) {
-        my $file0 = catpath $self->{cache_dir}, basename $perl->{url};
-        if (!-f $file0) {
+        my $source = catpath $self->{cache_dir}, basename $perl->{url};
+        if (!-f $source) {
             push @url, {
                 version => $perl->{version},
                 url => $perl->{url},
             };
         }
-        my $file1 = catpath $self->{target_dir}, "$perl->{version}.tar.xz";
-        if (!-f $file1) {
+        my $artifact = catpath $self->{target_dir}, "$perl->{version}.tar.xz";
+        if (!-f $artifact) {
             push @build, {
-                file => $file0,
+                source => $source,
                 version => $perl->{version},
                 prefix => $perl->{version},
                 configure => [],
             };
         }
-        my $file2 = catpath $self->{target_dir}, "$perl->{version}-thr.tar.xz";
-        if (!-f $file2) {
+        my $artifact_thr = catpath $self->{target_dir}, "$perl->{version}-thr.tar.xz";
+        if (!-f $artifact_thr) {
             push @build, {
-                file => $file0,
+                source => $source,
                 version => $perl->{version},
                 prefix => "$perl->{version}-thr",
                 configure => ["-Duseithreads"],
