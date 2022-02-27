@@ -4,7 +4,7 @@ prereqs:
       CPAN::Perl::Releases::MetaCPAN:
       Devel::PatchPerl:
       HTTP::Tinyish:
-      Parallel::Pipes:
+      Parallel::Pipes::App:
       version:
       Devel::PatchPerl::Plugin::Darwin::RemoveIncludeGuard:
         git: https://github.com/skaji/Devel-PatchPerl-Plugin-Darwin-RemoveIncludeGuard.git

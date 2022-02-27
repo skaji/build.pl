@@ -13,7 +13,7 @@ use File::pushd qw(pushd);
 use HTTP::Tinyish;
 use IO::Handle;
 use POSIX qw(strftime);
-use Parallel::Pipes;
+use Parallel::Pipes::App;
 
 {
     package Devel::PatchPerl::Plugin::My;
@@ -247,35 +247,23 @@ sub run {
         unlink $self->{logfile};
         return;
     }
-    my @result = $self->_parallel($self->{parallel}, \@build, sub {
-        my $build = shift;
-        warn "$$ \e[1;33mSTART\e[m $build->{prefix}\n";
-        my $start = time;
-        my $ok = $self->build(%$build);
-        my $elapsed = time - $start;
-        warn sprintf "$$ %s %s %d secs\n",
-            $ok ? "\e[1;32mDONE\e[m " : "\e[1;31mFAIL\e[m ", $build->{prefix}, $elapsed;
-        return { %$build, error => $ok ? "" : "failed to build $build->{prefix}" };
-    });
+    my @result = Parallel::Pipes::App->once(
+        num => $self->{parallel},
+        tasks => \@build,
+        work => sub {
+            my $build = shift;
+            warn "$$ \e[1;33mSTART\e[m $build->{prefix}\n";
+            my $start = time;
+            my $ok = $self->build(%$build);
+            my $elapsed = time - $start;
+            warn sprintf "$$ %s %s %d secs\n",
+                $ok ? "\e[1;32mDONE\e[m " : "\e[1;31mFAIL\e[m ", $build->{prefix}, $elapsed;
+            return { %$build, error => $ok ? "" : "failed to build $build->{prefix}" };
+        },
+    );
     for my $result (@result) {
         die "$result->{error}\n" if $result->{error};
     }
-}
-
-sub _parallel {
-    my ($self, $num, $tasks, $sub) = @_;
-    my $pipes = Parallel::Pipes->new($num, $sub);
-    my @result;
-    for my $task (@$tasks) {
-        my @ready = $pipes->is_ready;
-        push @result, $_->read for grep { $_->is_written } @ready;
-        $ready[0]->write($task);
-    }
-    while (my @written = $pipes->is_written) {
-        push @result, $_->read for @written;
-    }
-    $pipes->close;
-    @result;
 }
 
 if (@ARGV and $ARGV[0] =~ /^(-h|--help)$/) {
