@@ -247,7 +247,7 @@ sub run {
         unlink $self->{logfile};
         return;
     }
-    my @result = Parallel::Pipes::App->once(
+    my @result = Parallel::Pipes::App->map(
         num => $self->{parallel},
         tasks => \@build,
         work => sub {
