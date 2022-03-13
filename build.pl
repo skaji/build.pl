@@ -12148,13 +12148,17 @@ sub run {
     }
 
     if (@url) {
-        my @result = $self->_parallel($self->{parallel}, \@url, sub {
-            my $url = shift;
-            $self->_log("Fetching $url->{url}");
-            warn "$$ Fetching $url->{url}\n";
-            my (undef, $err) = $self->fetch($url->{url});
-            return { %$url, error => $err };
-        });
+        my @result = Parallel::Pipes::App->map(
+            num => $self->{parallel},
+            tasks => \@url,
+            work => sub {
+                my $url = shift;
+                $self->_log("Fetching $url->{url}");
+                warn "$$ Fetching $url->{url}\n";
+                my (undef, $err) = $self->fetch($url->{url});
+                return { %$url, error => $err };
+            },
+        );
         for my $result (@result) {
             die "$result->{error}\n" if $result->{error};
         }
