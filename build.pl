@@ -11617,10 +11617,6 @@ $fatpacked{"Devel/PatchPerl/Plugin/Darwin/RemoveIncludeGuard/Share.pm"} = '#line
   ___
 DEVEL_PATCHPERL_PLUGIN_DARWIN_REMOVEINCLUDEGUARD_SHARE
 
-$fatpacked{"Devel/PatchPerl/Plugin/Darwin/getcwd.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL_PLUGIN_DARWIN_GETCWD';
-  package Devel::PatchPerl::Plugin::Darwin::getcwd;use strict;use warnings;our$VERSION='0.002';use version;sub patchperl {my ($class,%argv)=@_;if ($^O ne "darwin"){return 1}my$version=version->parse($argv{version});if ($version >= v5.30.0){return 1}my ($file)=grep -f,qw(dist/PathTools/Cwd.pm dist/Cwd/Cwd.pm cpan/Cwd/Cwd.pm lib/Cwd.pm);die "Missing Cwd.pm" if!$file;warn "patching $file\n";my$find=q[my $start = @_ ? shift : '.';];open my$in,"<",$file or die;open my$out,">","$file.tmp" or die;while (my$l=<$in>){print {$out}$l;if ($l =~ /\Q$find\E/){print {$out}q[    if ($start eq ".") { return _backtick_pwd() } # XXX patched by Devel-PatchPerl-Plugin-Darwin-getcwd],"\n"}}close$in;close$out;rename "$file.tmp",$file or die "rename $!";return 1}1;
-DEVEL_PATCHPERL_PLUGIN_DARWIN_GETCWD
-
 $fatpacked{"Devel/PatchPerl/Plugin/FixCompoundTokenSplitByMacro.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL_PLUGIN_FIXCOMPOUNDTOKENSPLITBYMACRO';
   package Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro;use strict;use warnings;our$VERSION='0.001';use Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro::Share;use Devel::PatchPerl;use version ();sub patchperl {my ($class,%argv)=@_;my$version=version->parse($argv{version});my$name;if ($version >= v5.35.2){return 1}elsif ($version >= v5.19.5){$name="5.patch"}elsif ($version >= v5.19.4){$name="4.patch"}elsif ($version >= v5.9.4 || $version==v5.8.9){$name="3.patch"}elsif ($version==v5.9.3 || $version==v5.8.8){$name="2.patch"}elsif ($version >= v5.8.1){$name="1.patch"}else {return 1}my$patch=Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro::Share->file($name);Devel::PatchPerl::_patch($patch)}1;
 DEVEL_PATCHPERL_PLUGIN_FIXCOMPOUNDTOKENSPLITBYMACRO
@@ -11939,7 +11935,6 @@ use Parallel::Pipes::App;
         my ($class, %argv) = @_;
         my @plugin = qw(
             Darwin::RemoveIncludeGuard
-            Darwin::getcwd
         );
         for my $klass (map { "Devel::PatchPerl::Plugin::$_" } @plugin) {
             eval "require $klass" or die $@;
@@ -12039,7 +12034,7 @@ sub _system {
         exec { $cmd[0] } @cmd;
         exit 255;
     }
-    $self->_log("=== Executing @cmd");
+    $self->_log("=== Executing @cmd") if ref $cmd[0] ne 'CODE';
     while (<$fh>) {
         $self->_log($_);
     }
@@ -12173,12 +12168,19 @@ sub run {
         tasks => \@build,
         work => sub {
             my $build = shift;
-            warn "$$ \e[1;33mSTART\e[m $build->{prefix}\n";
+            warn sprintf "%s \e[1;33mSTART\e[m %s\n",
+                (strftime "%Y-%m-%dT%H:%M:%S", localtime),
+                $build->{prefix},
+            ;
             my $start = time;
             my $ok = $self->build(%$build);
             my $elapsed = time - $start;
-            warn sprintf "$$ %s %s %d secs\n",
-                $ok ? "\e[1;32mDONE\e[m " : "\e[1;31mFAIL\e[m ", $build->{prefix}, $elapsed;
+            warn sprintf "%s %s %s %d secs\n",
+                (strftime "%Y-%m-%dT%H:%M:%S", localtime),
+                $ok ? "\e[1;32mDONE\e[m " : "\e[1;31mFAIL\e[m ",
+                $build->{prefix},
+                $elapsed,
+            ;
             return { %$build, error => $ok ? "" : "failed to build $build->{prefix}" };
         },
     );

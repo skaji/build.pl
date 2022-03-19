@@ -22,7 +22,6 @@ use Parallel::Pipes::App;
         my ($class, %argv) = @_;
         my @plugin = qw(
             Darwin::RemoveIncludeGuard
-            Darwin::getcwd
         );
         for my $klass (map { "Devel::PatchPerl::Plugin::$_" } @plugin) {
             eval "require $klass" or die $@;
@@ -122,7 +121,7 @@ sub _system {
         exec { $cmd[0] } @cmd;
         exit 255;
     }
-    $self->_log("=== Executing @cmd");
+    $self->_log("=== Executing @cmd") if ref $cmd[0] ne 'CODE';
     while (<$fh>) {
         $self->_log($_);
     }
@@ -256,12 +255,19 @@ sub run {
         tasks => \@build,
         work => sub {
             my $build = shift;
-            warn "$$ \e[1;33mSTART\e[m $build->{prefix}\n";
+            warn sprintf "%s \e[1;33mSTART\e[m %s\n",
+                (strftime "%Y-%m-%dT%H:%M:%S", localtime),
+                $build->{prefix},
+            ;
             my $start = time;
             my $ok = $self->build(%$build);
             my $elapsed = time - $start;
-            warn sprintf "$$ %s %s %d secs\n",
-                $ok ? "\e[1;32mDONE\e[m " : "\e[1;31mFAIL\e[m ", $build->{prefix}, $elapsed;
+            warn sprintf "%s %s %s %d secs\n",
+                (strftime "%Y-%m-%dT%H:%M:%S", localtime),
+                $ok ? "\e[1;32mDONE\e[m " : "\e[1;31mFAIL\e[m ",
+                $build->{prefix},
+                $elapsed,
+            ;
             return { %$build, error => $ok ? "" : "failed to build $build->{prefix}" };
         },
     );
