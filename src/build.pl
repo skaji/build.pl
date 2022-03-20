@@ -14,6 +14,15 @@ use HTTP::Tinyish;
 use IO::Handle;
 use POSIX qw(strftime);
 use Parallel::Pipes::App;
+use version;
+
+my $HELP = <<'EOF';
+Usage: build.pl [versions]
+
+Examples:
+ $ build.pl
+ $ build.pl 5.34.0
+EOF
 
 {
     package Devel::PatchPerl::Plugin::My;
@@ -159,12 +168,12 @@ sub build {
 
             # XXX Because we want to apply FixCompoundTokenSplitByMacro to perl 5.34.0,
             # execute it separately
+            return if version->parse($version) >= v5.36.0;
             warn "Apply Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro\n";
             Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro->patchperl(version => $version);
         }) or return;
         $self->_system(
-            "sh",
-            "Configure",
+            "./Configure",
             "-des",
             "-DDEBUGGING=-g",
             "-Dprefix=" . catpath($self->{target_dir}, $prefix),
@@ -173,7 +182,10 @@ sub build {
             "-Dman3dir=none",
             @configure,
         ) or return;
-        $self->_system("make", "install") or return;
+        $self->_system(
+            "make",
+            "install",
+        ) or return;
         unlink catpath($self->{target_dir}, $prefix, "bin", "perl$version") or die;
     }
     $self->_system(
@@ -276,16 +288,7 @@ sub run {
     }
 }
 
-if (@ARGV and $ARGV[0] =~ /^(-h|--help)$/) {
-    die <<'EOF';
-Usage: build.pl [versions]
-
-Examples:
- $ build.pl
- $ build.pl 5.34.0
-EOF
-}
-
+die $HELP if @ARGV and $ARGV[0] =~ /^(-h|--help)$/;
 my $root = $ENV{PLENV_ROOT} || catpath($ENV{HOME}, ".plenv");
 my $app = __PACKAGE__->new(root => $root, parallel => 4);
 warn "Build.log is $app->{logfile}\n";
