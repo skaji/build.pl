@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-use strict;
+use v5.16;
 use warnings;
 
 use CPAN::Perl::Releases::MetaCPAN;
@@ -24,8 +24,7 @@ Examples:
  $ build.pl 5.34.0
 EOF
 
-{
-    package Devel::PatchPerl::Plugin::My;
+package Devel::PatchPerl::Plugin::My {
     $INC{"Devel/PatchPerl/Plugin/My.pm"} = $0;
     sub patchperl {
         my ($class, %argv) = @_;
@@ -40,8 +39,7 @@ EOF
     }
 }
 
-{
-    package Releases;
+package Releases {
     sub new {
         my $class = shift;
         my @release;
