@@ -10,6 +10,7 @@ use File::Path qw(mkpath rmtree);
 use File::Spec;
 use File::Temp qw(tempdir);
 use File::pushd qw(pushd);
+use Getopt::Long ();
 use HTTP::Tinyish;
 use IO::Handle;
 use POSIX qw(strftime);
@@ -19,9 +20,14 @@ use version;
 my $HELP = <<'EOF';
 Usage: build.pl [versions]
 
+Options:
+ -h, --help
+ -p, --parallel
+
 Examples:
  $ build.pl
  $ build.pl 5.34.0
+ $ build.pl --parallel=4 5.34.0
 EOF
 
 package Devel::PatchPerl::Plugin::My {
@@ -286,8 +292,12 @@ sub run {
     }
 }
 
-die $HELP if @ARGV and $ARGV[0] =~ /^(-h|--help)$/;
+Getopt::Long::GetOptions
+    "h|help" => sub { die $HELP },
+    "p|parallel=i" => \my $parallel,
+or exit 2;
+
 my $root = $ENV{PLENV_ROOT} || catpath($ENV{HOME}, ".plenv");
-my $app = __PACKAGE__->new(root => $root, parallel => 4);
+my $app = __PACKAGE__->new(root => $root, parallel => $parallel);
 warn "Build.log is $app->{logfile}\n";
 $app->run(@ARGV);
