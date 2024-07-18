@@ -50,8 +50,6 @@ package Releases {
         my $class = shift;
         my @release;
         for my $release (@{ CPAN::Perl::Releases::MetaCPAN->new->get }) {
-            my $status = $release->{status};
-            next if $status ne "cpan" && $status ne "latest";
             my $name = $release->{name};
             my ($version, $major, $minor, $patch)
                 = $name =~ /^perl-(([57])\.(\d+)\.(\d+))$/ or next;
