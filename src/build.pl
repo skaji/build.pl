@@ -21,13 +21,14 @@ my $HELP = <<'EOF';
 Usage: build.pl [versions]
 
 Options:
- -h, --help
- -p, --parallel
+     --root      root dir; will install $root/versions
+ -h, --help      show help
+ -p, --parallel  parallel
 
 Examples:
- $ build.pl
- $ build.pl 5.34.0
- $ build.pl --parallel=4 5.34.0
+ $ build.pl --root ~/env/plenv
+ $ build.pl --root ~/env/perl 5.34.0
+ $ build.pl --rot ~/.plenv --parallel=4 5.34.0
 EOF
 
 package Devel::PatchPerl::Plugin::My {
@@ -291,11 +292,12 @@ sub run {
 }
 
 Getopt::Long::GetOptions
+    "root=s" => \my $root,
     "h|help" => sub { die $HELP },
     "p|parallel=i" => \my $parallel,
 or exit 2;
 
-my $root = $ENV{PLENV_ROOT} || catpath($ENV{HOME}, ".plenv");
+die "Need root argument\n" if !$root;
 my $app = __PACKAGE__->new(root => $root, parallel => $parallel);
 warn "Build.log is $app->{logfile}\n";
 $app->run(@ARGV);
