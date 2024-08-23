@@ -3,6 +3,7 @@ use v5.16;
 use warnings;
 
 use CPAN::Perl::Releases::MetaCPAN;
+use Cwd qw(abs_path);
 use Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro;
 use Devel::PatchPerl;
 use File::Basename qw(basename);
@@ -37,6 +38,7 @@ package Devel::PatchPerl::Plugin::My {
         my ($class, %argv) = @_;
         my @plugin = qw(
             Darwin::RemoveIncludeGuard
+            DB_File
         );
         for my $klass (map { "Devel::PatchPerl::Plugin::$_" } @plugin) {
             eval "require $klass" or die $@;
@@ -298,6 +300,7 @@ Getopt::Long::GetOptions
 or exit 2;
 
 die "Need root argument\n" if !$root;
-my $app = __PACKAGE__->new(root => $root, parallel => $parallel);
+
+my $app = __PACKAGE__->new(root => abs_path($root), parallel => $parallel);
 warn "Build.log is $app->{logfile}\n";
 $app->run(@ARGV);
