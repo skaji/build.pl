@@ -29,7 +29,7 @@ Options:
 Examples:
  $ build.pl --root ~/env/plenv
  $ build.pl --root ~/env/perl 5.34.0
- $ build.pl --rot ~/.plenv --parallel=4 5.34.0
+ $ build.pl --root ~/.plenv --parallel=4 5.34.0
 EOF
 
 package Devel::PatchPerl::Plugin::My {
@@ -145,7 +145,7 @@ sub _system {
 
 sub fetch {
     my ($self, $url) = @_;
-    my $file = catpath $self->{cache_dir}, basename $url;
+    my $file = catpath $self->{build_dir}, basename $url;
     my $res = $self->{http}->mirror($url, $file);
     ($file, $res->{success} ? undef : "$res->{status} $url");
 }
@@ -219,14 +219,14 @@ sub run {
 
     my (@url, @build);
     for my $perl (@perl) {
-        my $source = catpath $self->{cache_dir}, basename $perl->{url};
+        my $source = catpath $self->{build_dir}, basename $perl->{url};
         if (!-f $source) {
             push @url, {
                 version => $perl->{version},
                 url => $perl->{url},
             };
         }
-        my $artifact = catpath $self->{target_dir}, "$perl->{version}.tar.xz";
+        my $artifact = catpath $self->{cache_dir}, "$perl->{version}.tar.xz";
         if (!-f $artifact) {
             push @build, {
                 source => $source,
@@ -235,7 +235,7 @@ sub run {
                 configure => [],
             };
         }
-        my $artifact_thr = catpath $self->{target_dir}, "$perl->{version}-thr.tar.xz";
+        my $artifact_thr = catpath $self->{cache_dir}, "$perl->{version}-thr.tar.xz";
         if (!-f $artifact_thr) {
             push @build, {
                 source => $source,
@@ -291,6 +291,12 @@ sub run {
     for my $result (@result) {
         die "$result->{error}\n" if $result->{error};
     }
+}
+
+if ($^O eq 'darwin') {
+    # OBJC_DISABLE_INITIALIZE_FORK_SAFETY
+    require Socket;
+    Socket::inet_aton("call-inet_aton-before_fork");
 }
 
 Getopt::Long::GetOptions
