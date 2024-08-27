@@ -96,7 +96,7 @@ sub new {
         build_dir => $build_dir,
         target_dir => $target_dir,
         context => '',
-        parallel => $argv{parallel} || 5,
+        parallel => $argv{parallel},
     }, $class;
 }
 

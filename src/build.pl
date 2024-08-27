@@ -29,7 +29,7 @@ if ($^O eq 'darwin') {
 Getopt::Long::GetOptions
     "root=s" => \my $root,
     "h|help" => sub { die $HELP },
-    "p|parallel=i" => \my $parallel,
+    "p|parallel=i" => \(my $parallel = 5),
 or exit 2;
 
 die "Need root argument\n" if !$root;
