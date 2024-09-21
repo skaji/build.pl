@@ -85,7 +85,7 @@ sub new {
     my $cache_dir = catpath $root, "cache";
     my $build_dir = catpath $root, "build";
     my $target_dir = catpath $root, "versions";
-    make_path $_ for grep !-d, $cache_dir, $build_dir, $target_dir;
+    make_path $_ for grep !-d, $cache_dir, $build_dir, $target_dir, (catpath $cache_dir, "source");
     my $logfile = catpath $build_dir, time . ".log";
     open my $logfh, ">>:unix", $logfile or die;
     bless {
@@ -128,7 +128,7 @@ sub _system {
 
 sub fetch {
     my ($self, $url) = @_;
-    my $file = catpath $self->{build_dir}, basename $url;
+    my $file = catpath $self->{cache_dir}, "source", basename $url;
     my $res = $self->{http}->mirror($url, $file);
     ($file, $res->{success} ? undef : "$res->{status} $url");
 }
@@ -202,7 +202,7 @@ sub run {
 
     my (@url, @build);
     for my $perl (@perl) {
-        my $source = catpath $self->{build_dir}, basename $perl->{url};
+        my $source = catpath $self->{cache_dir}, "source", basename $perl->{url};
         if (!-f $source) {
             push @url, {
                 version => $perl->{version},
