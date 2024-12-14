@@ -3,6 +3,7 @@ use v5.16;
 use warnings;
 
 use App;
+use Config ();
 use Cwd qw(abs_path);
 use Getopt::Long ();
 
@@ -20,10 +21,11 @@ Examples:
  $ build.pl --root ~/.plenv --parallel=4 5.34.0
 EOF
 
-if ($^O eq 'darwin') {
+if ($^O eq 'darwin' && $Config::Config{perlpath} eq "/usr/bin/perl") {
     # OBJC_DISABLE_INITIALIZE_FORK_SAFETY
-    require Socket;
-    Socket::inet_aton("call-inet_aton-before_fork");
+    my $lib = "/System/Library/Frameworks/Foundation.framework/Foundation";
+    require DynaLoader;
+    DynaLoader::dl_load_file $lib;
 }
 
 Getopt::Long::GetOptions
