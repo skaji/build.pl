@@ -3,8 +3,8 @@ use v5.16;
 use warnings;
 
 use App;
-use Config ();
 use Cwd qw(abs_path);
+use Darwin::InitObjC;
 use Getopt::Long ();
 
 my $HELP = <<'EOF';
@@ -21,12 +21,6 @@ Examples:
  $ build.pl --root ~/.plenv --parallel=4 5.34.0
 EOF
 
-if ($^O eq 'darwin' && $Config::Config{perlpath} eq "/usr/bin/perl") {
-    # OBJC_DISABLE_INITIALIZE_FORK_SAFETY
-    my $lib = "/System/Library/Frameworks/Foundation.framework/Foundation";
-    require DynaLoader;
-    DynaLoader::dl_load_file $lib;
-}
 
 Getopt::Long::GetOptions
     "root=s" => \my $root,
@@ -35,6 +29,8 @@ Getopt::Long::GetOptions
 or exit 2;
 
 die "Need root argument\n" if !$root;
+
+Darwin::InitObjC::maybe_init;
 
 my $app = App->new(root => abs_path($root), parallel => $parallel);
 warn "Build.log is $app->{logfile}\n";

@@ -12,3 +12,5 @@ prereqs:
         git: https://github.com/skaji/Devel-PatchPerl-Plugin-FixCompoundTokenSplitByMacro.git
       Devel::PatchPerl::Plugin::DB_File:
         git: https://github.com/skaji/Devel-PatchPerl-Plugin-DB_File.git
+      Darwin::InitObjC:
+        git: https://github.com/skaji/perl-Darwin-InitObjC.git
