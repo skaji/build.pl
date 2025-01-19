@@ -16,9 +16,9 @@ Options:
  -p, --parallel  parallel
 
 Examples:
- $ build.pl --root ~/env/plenv
+ $ build.pl --root ~/env/perl
  $ build.pl --root ~/env/perl 5.34.0
- $ build.pl --root ~/.plenv --parallel=4 5.34.0
+ $ build.pl --root ~/env/perl --parallel=4 5.34.0
 EOF
 
 
