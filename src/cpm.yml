@@ -2,9 +2,10 @@ prereqs:
   runtime:
     requires:
       CPAN::Perl::Releases::MetaCPAN:
+      Darwin::InitObjC:
       Devel::PatchPerl:
       HTTP::Tinyish:
-      Parallel::Pipes::App: { version: '0.102' }
+      Parallel::Pipes::App:
       version:
       Devel::PatchPerl::Plugin::Darwin::RemoveIncludeGuard:
         git: https://github.com/skaji/Devel-PatchPerl-Plugin-Darwin-RemoveIncludeGuard.git
@@ -12,5 +13,3 @@ prereqs:
         git: https://github.com/skaji/Devel-PatchPerl-Plugin-FixCompoundTokenSplitByMacro.git
       Devel::PatchPerl::Plugin::DB_File:
         git: https://github.com/skaji/Devel-PatchPerl-Plugin-DB_File.git
-      Darwin::InitObjC:
-        git: https://github.com/skaji/perl-Darwin-InitObjC.git
