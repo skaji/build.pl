@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
-use v5.16;
+use v5.20;
 use warnings;
+use experimental qw(signatures postderef);
 
 use App;
 use Cwd qw(abs_path);

@@ -1,6 +1,7 @@
 package App;
-use v5.16;
+use v5.20;
 use warnings;
+use experimental qw(signatures postderef);
 
 use CPAN::Perl::Releases::MetaCPAN;
 use Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro;
@@ -17,8 +18,7 @@ use version;
 
 package Devel::PatchPerl::Plugin::My {
     $INC{"Devel/PatchPerl/Plugin/My.pm"} = $0;
-    sub patchperl {
-        my ($class, %argv) = @_;
+    sub patchperl ($class, %argv) {
         my @plugin = qw(
             Darwin::RemoveIncludeGuard
             DB_File
@@ -32,10 +32,9 @@ package Devel::PatchPerl::Plugin::My {
 }
 
 package Releases {
-    sub new {
-        my $class = shift;
+    sub new ($class) {
         my @release;
-        for my $release (@{ CPAN::Perl::Releases::MetaCPAN->new->get }) {
+        for my $release (CPAN::Perl::Releases::MetaCPAN->new->get->@*) {
             my $name = $release->{name};
             my ($version, $major, $minor, $patch)
                 = $name =~ /^perl-(([57])\.(\d+)\.(\d+))$/ or next;
@@ -54,33 +53,30 @@ package Releases {
         }
         bless \@release, $class;
     }
-    sub find {
-        my ($self, $version) = @_;
-        my ($found) = grep { $_->{version} eq $version } @$self;
+    sub find ($self, $version) {
+        my ($found) = grep { $_->{version} eq $version } $self->@*;
         $found;
     }
-    sub stables {
-        my $self = shift;
+    sub stables ($self) {
         my %group;
-        for my $r (@$self) {
-            push @{$group{$r->{major_minor}}}, $r;
+        for my $r ($self->@*) {
+            push $group{$r->{major_minor}}->@*, $r;
         }
         for my $major_minor (keys %group) {
-            $group{$major_minor} = [ sort { $a->{patch} <=> $b->{patch} } @{$group{$major_minor}} ];
+            $group{$major_minor} = [ sort { $a->{patch} <=> $b->{patch} } $group{$major_minor}->@* ];
         }
         (
-            ( grep { $_->{patch} != 0 } @{$group{"5.008"}} ),
-            ( @{$group{"5.010"}} ),
+            ( grep { $_->{patch} != 0 } $group{"5.008"}->@* ),
+            ( $group{"5.010"}->@* ),
             ( map { $group{$_}[-1] } grep { $_ > 5.010 } sort keys %group ),
         );
     }
 }
 
 
-sub catpath { File::Spec->catfile(@_) }
+sub catpath (@argv) { File::Spec->catfile(@argv) }
 
-sub new {
-    my ($class, %argv) = @_;
+sub new ($class, %argv) {
     my $root = $argv{root};
     my $cache_dir = catpath $root, "cache";
     my $build_dir = catpath $root, "build";
@@ -100,14 +96,12 @@ sub new {
     }, $class;
 }
 
-sub _log {
-    my ($self, $line) = @_;
+sub _log ($self, $line) {
     chomp $line;
     $self->{logfh}->say("$$,$self->{context}," . strftime("%Y-%m-%dT%H:%M:%S", localtime) . "| " . $line);
 }
 
-sub _system {
-    my ($self, @cmd) = @_;
+sub _system ($self, @cmd) {
     my $pid = open my $fh, "-|";
     if ($pid == 0) {
         open STDERR, ">&", \*STDOUT;
@@ -126,24 +120,21 @@ sub _system {
     $? == 0;
 }
 
-sub fetch {
-    my ($self, $url) = @_;
+sub fetch ($self, $url) {
     my $file = catpath $self->{cache_dir}, "source", basename $url;
     my $res = $self->{http}->mirror($url, $file);
     ($file, $res->{success} ? undef : "$res->{status} $url");
 }
 
-sub build {
-    my ($self, %argv) = @_;
-
+sub build ($self, %argv) {
     my $source = $argv{source};
     my $prefix = $argv{prefix};
     my $version = $argv{version};
-    my @configure = @{$argv{configure}};
+    my @configure = $argv{configure}->@*;
 
     local $self->{context} = $prefix;
 
-    (my $base = basename $source) =~ s/\.tar\.(gz|bz2|xz)$//;
+    my $base = (basename $source) =~ s/\.tar\.(gz|bz2|xz)$//r;
     my $dir = tempdir "$base-XXXXX", CLEANUP => 0, DIR => $self->{build_dir};
     $self->_system("tar", "xf", $source, "--strip-components=1", "-C", $dir) or die;
 
@@ -186,9 +177,7 @@ sub build {
     1;
 }
 
-sub run {
-    my ($self, @version) = @_;
-
+sub run ($self, @version) {
     my $releases = Releases->new;
     my @perl;
     if (@version) {
@@ -238,7 +227,7 @@ sub run {
                 $self->_log("Fetching $url->{url}");
                 warn "$$ Fetching $url->{url}\n";
                 my (undef, $err) = $self->fetch($url->{url});
-                return { %$url, error => $err };
+                return { $url->%*, error => $err };
             },
         );
         for my $result (@result) {
@@ -268,7 +257,7 @@ sub run {
                 $build->{prefix},
                 $elapsed,
             ;
-            return { %$build, error => $ok ? "" : "failed to build $build->{prefix}" };
+            return { $build->%*, error => $ok ? "" : "failed to build $build->{prefix}" };
         },
     );
     for my $result (@result) {
