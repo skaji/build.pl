@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 use v5.20;
 use warnings;
-use experimental qw(signatures postderef);
+use experimental qw(lexical_subs signatures postderef);
 
 use App;
 use Cwd qw(abs_path);
@@ -25,7 +25,7 @@ EOF
 
 Getopt::Long::GetOptions
     "root=s" => \my $root,
-    "h|help" => sub { die $HELP },
+    "h|help" => sub (@) { die $HELP },
     "p|parallel=i" => \(my $parallel = 5),
 or exit 2;
 

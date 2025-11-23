@@ -18,5 +18,5 @@ HTTP::Tinyish::Wget undef M/MI/MIYAGAWA/HTTP-Tinyish-0.19.tar.gz
 IPC::Run3 0.049 R/RJ/RJBS/IPC-Run3-0.049.tar.gz
 Module::Pluggable 6.3 S/SI/SIMONW/Module-Pluggable-6.3.tar.gz
 Module::Pluggable::Object 5.2 S/SI/SIMONW/Module-Pluggable-6.3.tar.gz
-Parallel::Pipes 0.200 S/SK/SKAJI/Parallel-Pipes-0.200.tar.gz
-Parallel::Pipes::App 0.200 S/SK/SKAJI/Parallel-Pipes-0.200.tar.gz
+Parallel::Pipes 0.201 S/SK/SKAJI/Parallel-Pipes-0.201.tar.gz
+Parallel::Pipes::App 0.201 S/SK/SKAJI/Parallel-Pipes-0.201.tar.gz

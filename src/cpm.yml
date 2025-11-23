@@ -4,6 +4,7 @@ prereqs:
       CPAN::Perl::Releases::MetaCPAN:
       Darwin::InitObjC:
       Devel::PatchPerl:
+        version: '== 2.08'
       HTTP::Tinyish:
       Parallel::Pipes::App:
       version:

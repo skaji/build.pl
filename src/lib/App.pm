@@ -1,7 +1,7 @@
 package App;
 use v5.20;
 use warnings;
-use experimental qw(signatures postderef);
+use experimental qw(lexical_subs signatures postderef);
 
 use CPAN::Perl::Releases::MetaCPAN;
 use Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro;
@@ -74,7 +74,7 @@ package Releases {
 }
 
 
-sub catpath (@argv) { File::Spec->catfile(@argv) }
+my sub catpath (@argv) { File::Spec->catfile(@argv) }
 
 sub new ($class, %argv) {
     my $root = $argv{root};
