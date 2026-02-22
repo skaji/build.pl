@@ -133,6 +133,7 @@ sub build ($self, %argv) {
     my $source = $argv{source};
     my $prefix = $argv{prefix};
     my $version = $argv{version};
+    my $version_without_rc = $version =~ s/-RC\d//r;
     my @configure = $argv{configure}->@*;
 
     local $self->{context} = $prefix;
@@ -150,9 +151,9 @@ sub build ($self, %argv) {
 
             # XXX Because we want to apply FixCompoundTokenSplitByMacro to perl 5.34.0,
             # execute it separately
-            return if version->parse($version) >= v5.36.0;
+            return if version->parse($version_without_rc) >= v5.36.0;
             warn "Apply Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro\n";
-            Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro->patchperl(version => $version);
+            Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro->patchperl(version => $version_without_rc);
         }) or return;
         $self->_system(
             "./Configure",
@@ -168,7 +169,7 @@ sub build ($self, %argv) {
             "make",
             "install",
         ) or return;
-        unlink catpath($self->{target_dir}, $prefix, "bin", "perl$version") or die;
+        unlink catpath($self->{target_dir}, $prefix, "bin", "perl$version_without_rc") or die;
     }
     $self->_system(
         "tar", "cJf",
@@ -195,6 +196,7 @@ sub run ($self, @version) {
     my (@url, @build);
     for my $perl (@perl) {
         my $source = catpath $self->{cache_dir}, "source", basename $perl->{url};
+        my @usedevel = $perl->{minor} % 2 == 0 ? () : qw(-Dusedevel -Uversiononly);
         if (!-f $source) {
             push @url, {
                 version => $perl->{version},
@@ -207,7 +209,7 @@ sub run ($self, @version) {
                 source => $source,
                 version => $perl->{version},
                 prefix => $perl->{version},
-                configure => [],
+                configure => [@usedevel],
             };
         }
         my $artifact_thr = catpath $self->{cache_dir}, "$perl->{version}-thr.tar.xz";
@@ -216,7 +218,7 @@ sub run ($self, @version) {
                 source => $source,
                 version => $perl->{version},
                 prefix => "$perl->{version}-thr",
-                configure => ["-Duseithreads"],
+                configure => ["-Duseithreads", @usedevel],
             };
         }
     }
