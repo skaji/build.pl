@@ -1,6 +1,6 @@
-# build perls for plenv
+# build perls
 
-This script builds perls for plenv. The one command `build.pl` builds:
+This script builds perls. The one command `build.pl --root ~/env/perl` builds:
 
 * 5.8.1, 5.8.2, 5.8.3, 5.8.4, 5.8.5, 5.8.6, 5.8.7, 5.8.8, 5.8.9
 * 5.10.0, 5.10.1
@@ -9,11 +9,7 @@ This script builds perls for plenv. The one command `build.pl` builds:
 * latest 5.16
 * latest 5.18
 * latest 5.20
-* latest 5.22
-* latest 5.24
-* latest 5.26
-* latest 5.28
-* (and latest 5.30, latest 5.32, ... once they are available)
+* (and latest 5.22, latest 5.24, ...)
 
 with 2 flavors:
 
@@ -33,7 +29,7 @@ $ mv build.pl /path/to/bin/
 ## Example
 
 ```
-$ build.pl
+$ build.pl --root ~/env/perl
 Build.log is /Users/skaji/env/plenv/build/1644131275.log
 35586 START 5.8.1
 35587 START 5.8.1-thr
@@ -42,48 +38,61 @@ Build.log is /Users/skaji/env/plenv/build/1644131275.log
 ...
 (Be patient; this will take more than 1 hour...)
 
-$ plenv versions
-  system
-  5.10.0
-  5.10.0-thr
-  5.10.1
-  5.10.1-thr
-  5.12.5
-  5.12.5-thr
-  5.14.4
-  5.14.4-thr
-  5.16.3
-  5.16.3-thr
-  5.18.4
-  5.18.4-thr
-  5.20.3
-  5.20.3-thr
-  5.22.4
-  5.22.4-thr
-  5.24.4
-  5.24.4-thr
-  5.26.3
-  5.26.3-thr
-  5.28.1
-  5.28.1-thr
-  5.8.1
-  5.8.1-thr
-  5.8.2
-  5.8.2-thr
-  5.8.3
-  5.8.3-thr
-  5.8.4
-  5.8.4-thr
-  5.8.5
-  5.8.5-thr
-  5.8.6
-  5.8.6-thr
-  5.8.7
-  5.8.7-thr
-  5.8.8
-  5.8.8-thr
-  5.8.9
-  5.8.9-thr
+$ ls ~/env/perl/versions
+5.10.0
+5.10.0-thr
+5.10.1
+5.10.1-thr
+5.12.5
+5.12.5-thr
+5.14.4
+5.14.4-thr
+5.16.3
+5.16.3-thr
+5.18.4
+5.18.4-thr
+5.20.3
+5.20.3-thr
+5.22.4
+5.22.4-thr
+5.24.4
+5.24.4-thr
+5.26.3
+5.26.3-thr
+5.28.3
+5.28.3-thr
+5.30.3
+5.30.3-thr
+5.32.1
+5.32.1-thr
+5.34.3
+5.34.3-thr
+5.36.3
+5.36.3-thr
+5.38.5
+5.38.5-thr
+5.40.3
+5.40.3-thr
+5.42.0
+5.42.0-thr
+5.8.1
+5.8.1-thr
+5.8.2
+5.8.2-thr
+5.8.3
+5.8.3-thr
+5.8.4
+5.8.4-thr
+5.8.5
+5.8.5-thr
+5.8.6
+5.8.6-thr
+5.8.7
+5.8.7-thr
+5.8.8
+5.8.8-thr
+5.8.9
+5.8.9-thr
 ```
 
 ## Upgrade perls
@@ -91,7 +100,7 @@ $ plenv versions
 If a new stable perl is released, you may just execute `build.pl` again:
 
 ```
-$ build.pl
+$ build.pl --root ~/env/perl
 Build.log is /Users/skaji/env/plenv/build/1644131275.log
 35586 START 5.32.1
 35587 START 5.32.1-thr

@@ -1,5 +1,5 @@
 package App;
-use v5.20;
+use v5.22;
 use warnings;
 use experimental qw(lexical_subs signatures postderef);
 
@@ -36,9 +36,9 @@ package Releases {
         my @release;
         for my $release (CPAN::Perl::Releases::MetaCPAN->new->get->@*) {
             my $name = $release->{name};
-            my ($version, $major, $minor, $patch)
-                = $name =~ /^perl-(([57])\.(\d+)\.(\d+))$/ or next;
-            next if $minor % 2 != 0;
+            my ($version, $major, $minor, $patch, $rc)
+                = $name =~ /^perl-((5)\.(\d+)\.(\d+)(?:-(RC\d))?)$/;
+            next if !$version;
             my $major_minor = sprintf "%d.%03d", $major, $minor;
             my $url = $release->{download_url};
             $url =~ s/\.(gz|bz2)$/.xz/ if $major_minor >= 5.022;
@@ -48,6 +48,7 @@ package Releases {
                 major => $major,
                 minor => $minor,
                 patch => $patch,
+                rc => $rc,
                 url => $url,
             };
         }
@@ -60,6 +61,8 @@ package Releases {
     sub stables ($self) {
         my %group;
         for my $r ($self->@*) {
+            next if defined $r->{rc};
+            next if $r->{minor} % 2 != 0;
             push $group{$r->{major_minor}}->@*, $r;
         }
         for my $major_minor (keys %group) {

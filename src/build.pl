@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-use v5.20;
+use v5.22;
 use warnings;
 use experimental qw(lexical_subs signatures postderef);
 
