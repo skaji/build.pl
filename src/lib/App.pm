@@ -1,5 +1,5 @@
 package App;
-use v5.22;
+use v5.24;
 use warnings;
 use experimental qw(lexical_subs signatures postderef);
 
@@ -135,6 +135,7 @@ sub build ($self, %argv) {
     my $version = $argv{version};
     my $version_without_rc = $version =~ s/-RC\d//r;
     my @configure = $argv{configure}->@*;
+    push @configure, "-Dd_syscall" if $^O eq "darwin";
 
     local $self->{context} = $prefix;
 
