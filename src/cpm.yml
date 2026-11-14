@@ -2,8 +2,9 @@ prereqs:
   runtime:
     requires:
       CPAN::Perl::Releases::MetaCPAN:
+      Capture::Tiny:
       Darwin::InitObjC:
+      Devel::PatchPerl::Additionals: { git: https://github.com/skaji/perl-Devel-PatchPerl-Additionals }
       HTTP::Tinyish:
       Parallel::Pipes::App:
       version:
-      Devel::PatchPerl::Additionals: { git: https://github.com/skaji/perl-Devel-PatchPerl-Additionals }
