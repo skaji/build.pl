@@ -209,8 +209,7 @@ sub run ($self, @version) {
         my @result = Parallel::Pipes::App->map(
             num => $self->{parallel},
             tasks => \@url,
-            work => sub {
-                my $url = shift;
+            work => sub ($url) {
                 $self->_log("Fetching $url->{url}");
                 warn "$$ Fetching $url->{url}\n";
                 my (undef, $err) = $self->fetch($url->{url});
@@ -229,8 +228,7 @@ sub run ($self, @version) {
     my @result = Parallel::Pipes::App->map(
         num => $self->{parallel},
         tasks => \@build,
-        work => sub {
-            my $build = shift;
+        work => sub ($build) {
             warn sprintf "%s \e[1;33mSTART\e[m %s\n",
                 (strftime "%Y-%m-%dT%H:%M:%S", localtime),
                 $build->{prefix},
