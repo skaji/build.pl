@@ -4,8 +4,7 @@ use warnings;
 use experimental qw(lexical_subs signatures postderef);
 
 use CPAN::Perl::Releases::MetaCPAN;
-use Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro;
-use Devel::PatchPerl;
+use Devel::PatchPerl::SKAJI;
 use File::Basename qw(basename);
 use File::Path qw(make_path remove_tree);
 use File::Spec;
@@ -15,21 +14,6 @@ use HTTP::Tinyish;
 use POSIX qw(strftime);
 use Parallel::Pipes::App;
 use version;
-
-package Devel::PatchPerl::Plugin::My {
-    $INC{"Devel/PatchPerl/Plugin/My.pm"} = $0;
-    sub patchperl ($class, %argv) {
-        my @plugin = qw(
-            Darwin::RemoveIncludeGuard
-            DB_File
-        );
-        for my $klass (map { "Devel::PatchPerl::Plugin::$_" } @plugin) {
-            eval "require $klass" or die $@;
-            warn "Apply $klass\n";
-            $klass->patchperl(%argv);
-        }
-    }
-}
 
 package Releases {
     sub new ($class) {
@@ -146,16 +130,8 @@ sub build ($self, %argv) {
     {
         my $guard = pushd $dir;
 
-        $self->_system(sub {
-            local $ENV{PERL5_PATCHPERL_PLUGIN} = "My";
-            Devel::PatchPerl->patch_source;
+        Devel::PatchPerl::SKAJI->patchperl($version_without_rc, ".");
 
-            # XXX Because we want to apply FixCompoundTokenSplitByMacro to perl 5.34.0,
-            # execute it separately
-            return if version->parse($version_without_rc) >= v5.36.0;
-            warn "Apply Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro\n";
-            Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro->patchperl(version => $version_without_rc);
-        }) or return;
         $self->_system(
             "./Configure",
             "-des",
