@@ -6,4 +6,4 @@ prereqs:
       HTTP::Tinyish:
       Parallel::Pipes::App:
       version:
-      Devel::PatchPerl::SKAJI: { git: https://github.com/skaji/perl-Devel-PatchPerl-SKAJI }
+      Devel::PatchPerl::Additionals: { git: https://github.com/skaji/perl-Devel-PatchPerl-Additionals }

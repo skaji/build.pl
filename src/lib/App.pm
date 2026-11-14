@@ -5,7 +5,7 @@ use experimental qw(lexical_subs signatures postderef);
 
 use CPAN::Perl::Releases::MetaCPAN;
 use Capture::Tiny qw(capture_merged);
-use Devel::PatchPerl::SKAJI;
+use Devel::PatchPerl::Additionals;
 use File::Basename qw(basename);
 use File::Path qw(make_path remove_tree);
 use File::Spec;
@@ -132,7 +132,7 @@ sub build ($self, %argv) {
         my $guard = pushd $dir;
 
         my ($merged, $ok) = capture_merged {
-            eval { Devel::PatchPerl::SKAJI->patchperl($version_without_rc, "."); 1 };
+            eval { Devel::PatchPerl::Additionals->patchperl($version_without_rc, "."); 1 };
         };
         if (!$ok) {
             $self->_log($merged);
