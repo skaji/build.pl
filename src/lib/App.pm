@@ -130,7 +130,12 @@ sub build ($self, %argv) {
     {
         my $guard = pushd $dir;
 
-        Devel::PatchPerl::SKAJI->patchperl($version_without_rc, ".");
+        {
+            open my $fh, ">", \my $stout;
+            local *STDOUT = $fh;
+            local *STDERR = $fh;
+            Devel::PatchPerl::SKAJI->patchperl($version_without_rc, ".");
+        }
 
         $self->_system(
             "./Configure",
